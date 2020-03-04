@@ -1,8 +1,8 @@
 #!/bin/bash -l
-#SBATCH -D /home/sodell/projects/impute/plink_files
+#SBATCH -D /home/sodell/projects/biogemma
 #SBATCH -J haploprobs
-#SBATCH -o /home/sodell/projects/impute/slurm-logs/out-%j.txt
-#SBATCH -e /home/sodell/projects/impute/slurm-logs/error-%j.txt
+#SBATCH -o /home/sodell/projects/biogemma/slurm-logs/out-%j.txt
+#SBATCH -e /home/sodell/projects/biogemma/slurm-logs/error-%j.txt
 #SBATCH -t 24:00:00
 #SBATCH --ntasks=3
 #SBATCH --mem 23G
@@ -28,4 +28,4 @@ module load R
 
 #Rscript Rscripts/ibd_blocks.R $SLURM_ARRAY_TASK_ID $IBDFILE $GENOFILE $PMAP $OUTFILE
 
-Rscript germline_haplotypes.R 10
+Rscript scripts/germline_haplotypes.R 10

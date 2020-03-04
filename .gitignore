@@ -17,6 +17,7 @@ ref_align/psr_utils/__pycache__
 *.tsv
 genotypes/
 *.ped
+*.bed
 *.map
 *.bim
 *.fam

@@ -15,7 +15,7 @@ founders=c("A632_usa","B73_inra","CO255_inra","FV252_inra","OH43_inra", "A654_in
 
 founders2=c("A632","B73","CO255","FV252","OH43", "A654","FV2","C103","EP1","D105","W117","B96","DK63","F492","ND245","VA85")
 
-ibd=read_table2(sprintf('germline/Biogemma_Founders_germline_IBD_chr%s.match',c),col_names = F)
+ibd=read_table2(sprintf('ibd_segments/germline/600K/Biogemma_Founders_germline_IBD_chr%s.match',c),col_names = F)
 ibd=as.data.frame(ibd,stringsAsFactors=F)
 for(i in seq(1,dim(ibd)[1])){
       if(!(ibd[i,]$X1 %in% founders)){
@@ -35,9 +35,9 @@ names(ibd)=c('ID_1','Family_ID_1','ID_2','Family_ID2','Chromosome','left_pos','r
 ibd=ibd[order(ibd$left_pos),]
 rownames(ibd)=seq(1,dim(ibd)[1])
 
-genofile=sprintf("../Biogemma_121318/geno_probs/bg%s_genoprobs_010319.rds",c)
-pmapfile=sprintf("../Biogemma_121318/qtl2_startfiles/Biogemma_pmap_c%s.csv",c)
-outfile=sprintf("../Biogemma_121318/haplotype_probs/bg%s_haplotype_probs_020320.rds",c)
+genofile=sprintf("genotypes/probabilities/geno_probs/raw/bg%s_genoprobs_010319.rds",c)
+pmapfile=sprintf("genotypes/qtl2/startfiles/Biogemma_pmap_c%s.csv",c)
+outfile=sprintf("genotypes/probabilities/haplotype_probs/bg%s_haplotype_probs_030320.rds",c)
 
 # Read in IBD segments from get_ibd.R
 
@@ -102,8 +102,8 @@ ibd_segments=as.data.frame(ibd_segments,stringsAsFactors=F)
 names(ibd_segments)=c('chrom','start','end',hap_founders,'n_haps')
 #dimnames(ibd_graph)[[3]]=c("blank",ibd_segments$start)
 
-saveRDS(ibd_graph,sprintf('germline/bg%s_ibd_graph.rds',c))
-fwrite(ibd_segments,sprintf('germline/bg%s_ibd_blocks_fixed.txt',c),row.names=F,quote=F,sep='\t')
+saveRDS(ibd_graph,sprintf('ibd_segments/germline/600K/bg%s_ibd_graph.rds',c))
+fwrite(ibd_segments,sprintf('ibd_segments/germline/600K/bg%s_ibd_blocks_fixed.txt',c),row.names=F,quote=F,sep='\t')
 
 pr=readRDS(genofile)
 #pmap=fread(pmapfile,data.table=F)
@@ -180,10 +180,10 @@ for(h in groups){
       dropped[[count]]$linked=c(dropped[[count]]$linked,m_names[i])
     }
   }
-  saveRDS(dropped,sprintf('../Biogemma_121318/haplotype_probs/bg%s_haplogroup%s_dropped_markers.rds',c,h))
+  saveRDS(dropped,sprintf('genotypes/probabilities/haplotype_probs/bg%s_haplogroup%s_dropped_markers.rds',c,h))
   filtered_hap=c()
   for(k in 1:h){filtered_hap[[k]]=regrp[[k]][,keep]}
-  saveRDS(filtered_hap,sprintf('../Biogemma_121318/haplotype_probs/bg%s_filtered_haplogroup%s_probs_2.rds',c,h))
+  saveRDS(filtered_hap,sprintf('genotypes/probabilities/haplotype_probs/bg%s_filtered_haplogroup%s_probs_2.rds',c,h))
   sprintf("Keeping %s markers in haplogroup %s on chromosome %s with correlation filter of %.2f",length(keep),h,c,cutoff)
   #final_haplo[[as.character(h)]]=haplo_probs
   
