@@ -17,3 +17,4 @@
 
 scripts/./run_germline_wgs.sh
 
+scripts/./run_germline.sh

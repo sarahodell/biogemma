@@ -26,6 +26,8 @@ names(ibd_600K)=c('ID_1','Family_ID_1','ID_2','Family_ID2','Chromosome','left_po
 
 bed_600K=ibd_600K[,c('Chromosome','left_pos','right_pos')]
 bed_600K$name=paste0(ibd_600K$ID_1,'-',ibd_600K$ID_2)
+#bed_600K$score='.'
+#bed_600K$strand=paste0(ibd_600K$ID_1,'-',ibd_600K$ID_2)
 
 fwrite(bed_600K,sprintf('ibd_segments/comparison/bedfiles/Biogemma_Founders_600K_germline_IBD_chr%s.bed',c),row.names=F,col.names=F,quote=F,sep='\t')
 
@@ -37,5 +39,7 @@ ker','right_marker','n_markers','Genetic_length','Genetic_length_units','n_misma
 
 bed_wgs=ibd_wgs[,c('Chromosome','left_pos','right_pos')]
 bed_wgs$name=paste0(ibd_wgs$ID_1,'-',ibd_wgs$ID_2)
+#bed_wgs$score='.'
+#bed_wgs$strand=paste0(ibd_wgs$ID_1,'-',ibd_wgs$ID_2)
 
 fwrite(bed_wgs,sprintf('ibd_segments/comparison/bedfiles/Biogemma_Founders_WGS_germline_IBD_chr%s.bed',c),row.names=F,col.names=F,quote=F,sep='\t')
