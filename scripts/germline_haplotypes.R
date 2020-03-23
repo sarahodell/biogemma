@@ -106,11 +106,9 @@ saveRDS(ibd_graph,sprintf('ibd_segments/germline/600K/bg%s_ibd_graph.rds',c))
 fwrite(ibd_segments,sprintf('ibd_segments/germline/600K/bg%s_ibd_blocks_fixed.txt',c),row.names=F,quote=F,sep='\t')
 
 pr=readRDS(genofile)
-#pmap=fread(pmapfile,data.table=F)
-#pmap$pos=pmap$pos*1e6
 samples=unlist(dimnames(pr[[1]])[1])
 
-groups=sort(unique(ibd_segments$n_haps))
+groups=sort(unique(as.integer(ibd_segments$n_haps)))
 final_haplo=vector("list",length=length(groups))
 names(final_haplo)=groups
 for(h in groups){

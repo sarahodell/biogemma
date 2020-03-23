@@ -39,7 +39,7 @@ data_blup=data_blup[,c('ID','y')]
 
 #map=fread(sprintf('../../qtl2_startfiles/Biogemma_pmap_c%s.csv',chr),data.table=F)
 
-geno=fread(sprintf('DH_geno_chr%s_121718.csv',chr),data.table=F,stringsAsFactors=F)
+geno=fread(sprintf('../../genotypes/qtl/Biogemma_DHgenos/DH_geno_chr%s_121718.csv',chr),data.table=F,stringsAsFactors=F)
 X=sapply(seq(1,dim(geno)[1]),function(x) ifelse(geno[x,2:dim(geno)[2]]=='A',0,1))
 X=t(X)
 print(dim(X))

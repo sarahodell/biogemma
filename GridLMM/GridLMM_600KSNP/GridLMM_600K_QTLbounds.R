@@ -35,7 +35,7 @@ data=data[data$Loc.Year.Treat==env,]
 data=data[!is.na(data$y),]
 data$y = data$y - mean(data$y)
 
-geno=fread(sprintf('DH_geno_chr%s_121718.csv',chr),data.table=F,stringsAsFactors=F)
+geno=fread(sprintf('../../genotypes/qtl2/Biogemma_DHgenos/DH_geno_chr%s_121718.csv',chr),data.table=F,stringsAsFactors=F)
 X=sapply(seq(1,dim(geno)[1]),function(x) ifelse(geno[x,2:dim(geno)[2]]=='A',0,1))
 X=t(X)
 print(dim(X))

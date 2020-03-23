@@ -1,17 +1,16 @@
 #!/bin/bash -l
-#SBATCH -D /home/sodell/projects/impute/Biogemma_121318/GridLMM/GridLMM_600KSNP
+#SBATCH -D /home/sodell/projects/biogemma/GridLMM/GridLMM_600KSNP
 #SBATCH -J glm_snp
-#SBATCH -o /home/sodell/projects/impute/slurm-logs/out-%j.txt
-#SBATCH -e /home/sodell/projects/impute/slurm-logs/error-%j.txt
+#SBATCH -o /home/sodell/projects/biogemma/slurm-logs/out-%j.txt
+#SBATCH -e /home/sodell/projects/biogemma/slurm-logs/error-%j.txt
 #SBATCH -t 48:00:00
-#SBATCH --array=1-10%5
 #SBATCH --ntasks=4
 #SBATCH --mem=4G
 
 module load R
 
-#chr=3
-chr=$SLURM_ARRAY_TASK_ID
+chr=8
+#chr=$SLURM_ARRAY_TASK_ID
 
 while read pheno; do
     echo $pheno
