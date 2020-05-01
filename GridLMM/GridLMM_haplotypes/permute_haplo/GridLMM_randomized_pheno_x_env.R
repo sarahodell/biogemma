@@ -17,7 +17,7 @@ library('parallel')
 library('MASS')
 
 # Read in Kinship Matrix
-K=fread(sprintf('../K_matrices/K_matrix_chr%s.txt',chr),data.table=F)
+K=fread(sprintf('../../K_matrices/K_matrix_chr%s.txt',chr),data.table=F)
 rownames(K)=K[,1]
 rownames(K)=gsub("-",".",rownames(K))
 K=as.matrix(K[,-1])
@@ -26,12 +26,12 @@ colnames(K)=rownames(K)
 
 # Read in phenotypes
 # Grab the phenotype of interest and drop the genotypes not in the K matrix
-phenotypes=fread('../phenotypes.csv',data.table=F)
+phenotypes=fread('../../phenotypes.csv',data.table=F)
 phenotypes=phenotypes[,c('Genotype_code','Loc.Year.Treat',pheno)]
 phenotypes$Genotype_code=gsub('-','.',phenotypes$Genotype_code)
 phenotypes=phenotypes[phenotypes$Genotype_code %in% rownames(K),]
 
-X_list=readRDS(sprintf('../../haplotype_probs/bg%s_filtered_haplogroup%.0f_probs_2.rds',chr,h))
+X_list=readRDS(sprintf('../../../genotypes/probabilities/haplotype_probs/bg%s_filtered_haplogroup%.0f_probs_2.rds',chr,h))
 
 data=data.frame(ID=phenotypes$Genotype_code,ID2=phenotypes$Genotype_code,Loc.Year.Treat=phenotypes$Loc.Year.Treat,y=phenotypes[,c(pheno)],stringsAsFactors=F)
 data=data[data$Loc.Year.Treat==env,]
@@ -41,20 +41,48 @@ data$y=data$y - mean(data$y)
 null_model = GridLMM_ML(y~1+(1|ID),data,relmat=list(ID=K),ML=T,REML=F,verbose=F)
 
 # Grab only genotypes in data
-X_list_full=lapply(X_list,function(x) x[data$ID,])
+dimx=dim(X_list[[1]])[2]
+X_list_full=lapply(X_list,function(x) array(x[data$ID,],dim=c(dim(data)[1],dimx),dimnames=list(data$ID,dimnames(X_list[[1]])[[2]])))
+
+
+#X_list_full=lapply(X_list,function(x) x[data$ID,])
+
+# Check for and remove monomorphic sites
+mono=c()
+dimx=dim(X_list[[1]])[2]
+dimy=dim(X_list[[1]])[1]
+for(i in seq(1,dimx)){
+  grab=as.data.frame(lapply(X_list_full,function(x) x[,i]),stringsAsFactors = F)
+  names(grab)=as.character(seq(1,h))
+  grab_b=apply(grab,MARGIN=2,FUN=function(x) ifelse(x>=0.95,1,ifelse(x<=0.05,0,x)))
+  m=apply(grab_b,MARGIN=2,FUN=function(n) sum(n))
+  if(length(m[m==dimy])!=0){
+    mono=c(mono,i)
+  }
+}
+
+if(length(mono)>0){
+  X_list_filtered=lapply(X_list_full,function(x) x[,-mono])
+}else{
+  X_list_filtered=X_list_full
+}
+
+remove(X_list_full)
+remove(X_list)
 
 n_reps=seq(1,reps)
 
 randomized_gwas<-function(rep){
-   len=dim(X_list_full[[1]])[1]
+   len=dim(X_list_filtered[[1]])[1]
 
    # Run GridLMM
 
    # randomize the order of the genotypes
    draw=sample(len,len,replace=F)
-   X_list_reordered=lapply(X_list_full,function(x) x[draw,])
+   dimx=dim(X_list_filtered[[1]])[2]
+   X_list_reordered=lapply(X_list_filtered,function(x) array(x[draw,],dim=c(dim(data)[1],dimx)))
    for(x in seq(1,h)){
-       dimnames(X_list_reordered[[x]])[[1]]=dimnames(X_list_full[[1]])[[1]]
+       dimnames(X_list_reordered[[x]])[[1]]=dimnames(X_list_filtered[[1]])[[1]]
    }
 
    h2_start=null_model$results[,grepl('.ML',colnames(null_model$results),fixed=T),drop=FALSE]
@@ -76,5 +104,3 @@ results=mclapply(n_reps,randomized_gwas,mc.cores=cores)
 }))
 
 saveRDS(results,sprintf('test_models/chr%s_haplogroup%.0f_%s_x_%s_%.0frep_max_pvalues.rds',chr,h,pheno,env,reps))
-
-

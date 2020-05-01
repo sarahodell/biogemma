@@ -5,15 +5,15 @@ library('dplyr')
 args=commandArgs(trailingOnly=T)
 env=as.character(args[[1]])
 phenotypes=c("male_flowering_d6","female_flowering_d6","total_plant_height","grain_yield_15","tkw_15","harvest_grain_moisture")
-base=c(6,10,6,7,9,9,9,9,8,7)
+base=c(10,9,9,10,7,10,6,9,9,10)
 
 full_gwas=c()
 for(i in seq(1,10)){
-      pmap=fread(sprintf('../qtl2_startfiles/Biogemma_pmap_c%.0f.csv',i),data.table=F)
+      pmap=fread(sprintf('../genotypes/qtl2/startfiles/Biogemma_pmap_c%.0f.csv',i),data.table=F)
       for(h in seq(base[i],16)){
       	    tmp_gwas=c()
 	    for(p in phenotypes){
-      	    	  g=readRDS(sprintf('models/Biogemma_chr%.0f_haplogrp%.0f_%s_x_%s.rds',i,h,p,env))
+      	    	  g=readRDS(sprintf('GridLMM_haplotypes/models/Biogemma_chr%.0f_haplogrp%.0f_%s_x_%s.rds',i,h,p,env))
 		  gwas=g[,c('X_ID','p_value_ML')]
 		  gwas$chr=i
 		  gwas$hapgrp=h

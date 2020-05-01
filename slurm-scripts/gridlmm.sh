@@ -1,16 +1,16 @@
 #!/bin/bash -l
-#SBATCH -D /home/sodell/projects/impute/Biogemma_121318/GridLMM
+#SBATCH -D /home/sodell/projects/biogemma/GridLMM/GridLMM_haplotypes
 #SBATCH -J gridlmm
-#SBATCH -o /home/sodell/projects/impute/slurm-logs/out-%j.txt
-#SBATCH -e /home/sodell/projects/impute/slurm-logs/error-%j.txt
+#SBATCH -o /home/sodell/projects/biogemma/slurm-logs/out-%j.txt
+#SBATCH -e /home/sodell/projects/biogemma/slurm-logs/error-%j.txt
 #SBATCH -t 48:00:00
 #SBATCH --array=1-10%5
 #SBATCH --ntasks=4
 #SBATCH --mem=15G
 
 module load R
-
-base_list=(blank 6 10 6 7 9 9 9 9 8 7)
+base_list=(blank 10 9 9 10 7 10 6 9 9 10)
+#base_list=(blank 6 10 6 7 9 9 9 9 8 7)
 base=$(echo ${base_list[$SLURM_ARRAY_TASK_ID]})
 hap_list=$(echo $(seq $base 16))
 

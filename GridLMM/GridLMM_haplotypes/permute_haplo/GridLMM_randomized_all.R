@@ -19,7 +19,7 @@ library('MASS')
 all_reps=c()
 
 # Read in Kinship Matrix
-K=fread(sprintf('../K_matrices/K_matrix_chr%s.txt',chr),data.table=F)
+K=fread(sprintf('../../K_matrices/K_matrix_chr%s.txt',chr),data.table=F)
 rownames(K)=K[,1]
 rownames(K)=gsub("-",".",rownames(K))
 K=as.matrix(K[,-1])
@@ -27,7 +27,7 @@ colnames(K)=rownames(K)
 
 # Read in phenotypes
 # Grab the phenotype of interest and drop the genotypes not in the K matrix
-phenotypes=fread('../phenotypes.csv',data.table=F)
+phenotypes=fread('../../phenotypes.csv',data.table=F)
 phenotypes=phenotypes[,c('Genotype_code','Loc.Year.Treat',pheno)]
 phenotypes$Genotype_code=gsub('-','.',phenotypes$Genotype_code)
 phenotypes=phenotypes[phenotypes$Genotype_code %in% rownames(K),]
@@ -44,20 +44,47 @@ null_model = GridLMM_ML(y~1 + (1|ID),data_blup,relmat=list(ID=K),ML=T,REML=F,ver
 
 # Read in the haplotype group probabilities
 # Filter genotypes that are not in the K matrix
-X_list=readRDS(sprintf('../../haplotype_probs/bg%s_filtered_haplogroup%.0f_probs_2.rds',chr,h))
-X_list_full=lapply(X_list,function(x) x[data_blup$ID,])
+X_list=readRDS(sprintf('../../../genotypes/probabilities/haplotype_probs/bg%s_filtered_haplogroup%.0f_probs_2.rds',chr,h))
+dimx=dim(X_list[[1]])[2]
+
+X_list_full=lapply(X_list,function(x) array(x[data_blup$ID,],dim=c(dim(data_blup)[1],dimx),dimnames=list(data_blup$ID,dimnames(X_list[[1]])[[2]])))
+
+# Check if there are any monomorphic sites and remove if there are
+
+mono=c()
+dimx=dim(X_list_full[[1]])[2]
+dimy=dim(X_list_full[[1]])[1]
+for(i in seq(1,dimx)){
+  grab=as.data.frame(lapply(X_list_full,function(x) x[,i]),stringsAsFactors = F)
+  names(grab)=as.character(seq(1,h))
+  grab_b=apply(grab,MARGIN=2,FUN=function(x) ifelse(x>=0.95,1,ifelse(x<=0.05,0,x)))
+  m=apply(grab_b,MARGIN=2,FUN=function(n) sum(n))
+  if(length(m[m==dimy])!=0){
+    mono=c(mono,i)
+  }
+}
+if(length(mono)>0){
+  X_list_filtered=lapply(X_list_full,function(x) x[,-mono])
+}else{
+  X_list_filtered=X_list_full
+}
+
+
+#Clear out memory
+remove(X_list_full)
+remove(X_list)
 
 n_reps=seq(1,reps)
 
 randomized_gwas <- function(rep) {
 
    ### Randomly reassign genotypes to individuals
-   len=dim(X_list_full[[1]])[1]
+   len=dim(X_list_filtered[[1]])[1]
    draw=sample(len,len,replace=F)
-   
-   X_list_reordered=lapply(X_list_full,function(x) x[draw,])
+   dimx=dim(X_list_filtered[[1]])[2]
+   X_list_reordered=lapply(X_list_filtered,function(x) array(x[draw,],dim=c(dim(data_blup)[1],dimx)))
    for(x in seq(1,h)){
-       dimnames(X_list_reordered[[x]])[[1]]=dimnames(X_list_full[[1]])[[1]]
+       dimnames(X_list_reordered[[x]])[[1]]=dimnames(X_list_filtered[[1]])[[1]]
    }
 
    # Run GridLMM

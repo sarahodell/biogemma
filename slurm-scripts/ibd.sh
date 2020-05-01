@@ -4,6 +4,7 @@
 #SBATCH -o /home/sodell/projects/biogemma/slurm-logs/out-%j.txt
 #SBATCH -e /home/sodell/projects/biogemma/slurm-logs/error-%j.txt
 #SBATCH -t 24:00:00
+#SBATCH --array=1-10
 #SBATCH --ntasks=3
 #SBATCH --mem 23G
 
@@ -28,4 +29,4 @@ module load R
 
 #Rscript Rscripts/ibd_blocks.R $SLURM_ARRAY_TASK_ID $IBDFILE $GENOFILE $PMAP $OUTFILE
 
-Rscript scripts/germline_haplotypes.R 10
+Rscript scripts/germline_haplotypes.R $SLURM_ARRAY_TASK_ID

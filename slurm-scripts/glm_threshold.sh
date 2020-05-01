@@ -1,8 +1,8 @@
 #!/bin/bash -l
-#SBATCH -D /home/sodell/projects/impute/Biogemma_121318/GridLMM/permute_haplo
+#SBATCH -D /home/sodell/projects/biogemma/GridLMM
 #SBATCH -J glm_threshold
-#SBATCH -o /home/sodell/projects/impute/slurm-logs/out-%j.txt
-#SBATCH -e /home/sodell/projects/impute/slurm-logs/error-%j.txt
+#SBATCH -o /home/sodell/projects/biogemma/slurm-logs/out-%j.txt
+#SBATCH -e /home/sodell/projects/biogemma/slurm-logs/error-%j.txt
 #SBATCH -t 500:00:00
 #SBATCH --array=1-50%10
 #SBATCH --ntasks=4
@@ -17,13 +17,14 @@ env="$(sed "${SLURM_ARRAY_TASK_ID}q;d" pheno_env_list.txt | cut -f2 -d,)"
 echo $pheno
 echo $env
 
-#if [ $env == "ALL" ]
-#then 
-#    Rscript find_threshold3.R $pheno $env
-#fi
+#Haplotype threshold
+Rscript GridLMM_haplotypes/permute_haplo/find_threshold.R $pheno $env
 
-Rscript find_threshold3.R $pheno $env
-#Rscript GridLMM_plot_by_chr.R $pheno $env
+#Founder threshold
+Rscript GridLMM_founderprobs/permute/find_threshold.R $pheno $env
+
+#600K threshold
+Rscript GridLMM_600KSNP/permute/find_threshold.R $pheno $env
 
 
 

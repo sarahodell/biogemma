@@ -6,13 +6,15 @@ args=commandArgs(trailingOnly=T)
 pheno=as.character(args[[1]])
 env=as.character(args[[2]])
 chr=as.character(args[[3]])
-cores=as.numeric(args[[4]])
-reps=as.numeric(args[[5]])
+grp=as.character(args[[4]])
+cores=as.numeric(args[[5]])
+reps=as.numeric(args[[6]])
 
 library('GridLMM')
 library('data.table')
 library('dplyr')
-
+library('parallel')
+library('MASS')
 
 # Read in Kinship Matrix
 K=fread(sprintf('../../K_matrices/K_matrix_chr%s.txt',chr),data.table=F)
@@ -33,22 +35,38 @@ data=data[data$Loc.Year.Treat==env,]
 data=data[!is.na(data$y),]
 data$y = data$y-mean(data$y)
 
-geno=fread(sprintf('../DH_geno_chr%s_121718.csv',chr),data.table=F)
-X=sapply(seq(1,dim(geno)[1]),function(x) ifelse(geno[x,2:dim(geno)[2]]=='A',0,1))
-X=t(X)
-print(dim(X))
-X=as.data.frame(X)
-rownames(X)=geno$ind
-colnames(X)=colnames(geno)[2:dim(geno)[2]]
-
+X=fread(sprintf('../../../genotypes/qtl2/Biogemma_DHgenos/bg%s_filtered_600K.csv',chr),data.table=F)
+#X=sapply(seq(1,dim(geno)[1]),function(x) ifelse(geno[x,2:dim(geno)[2]]=='A',0,1))
+#X=t(X)
+#print(dim(X))
+#X=as.data.frame(X)
+rownames(X)=X$ind
+#colnames(X)=colnames(geno)[2:dim(geno)[2]]
+X=X[,2:dim(X)[2]]
 # Drop non-matching IDs
 X=X[rownames(X) %in% data$ID,]
 data=data[data$ID %in% rownames(X),]
-X=as.matrix(X)
+
+dimr=dim(X)[1]
+#dimc=dim(X)[2]
+mono=c()
+m=apply(X,MARGIN=2,FUN=function(n) length(unique(n)))
+if(length(m[m==dimr]!=0)){
+  mono=c(mono,which(m==dimr))
+}
+if(length(mono)>=1){
+  X_filtered=X[,-mono]
+}else{
+  X_filtered=X
+}
+
+X=as.matrix(X_filtered)
 
 all_gwas=c()
 
-for(i in 1:reps){
+n_reps=seq(1,reps)
+
+randomized_gwas<-function(rep){
    len=dim(X)[1]
    draw=sample(len,len,replace=F)
 
@@ -69,12 +87,16 @@ for(i in 1:reps){
                         centerX = TRUE,
                         scaleX = FALSE,
                         fillNAX = FALSE,
-                        method = 'REML',
+                        method = 'ML',
                         mc.cores = 1,
                         verbose = FALSE
 			)
    gwas=gwas$results
-   gwas=gwas[!is.na(gwas$p_value_REML),]
-   all_gwas=rbind(all_gwas,data.frame(chr=chr,rep=i,pvalue=min(gwas$p_value_REML))) 
+   gwas=gwas[!is.na(gwas$p_value_ML),]
+   tmp=data.frame(chr=chr,rep=rep,pvalue=min(gwas$p_value_ML))
 }
-fwrite(all_gwas,sprintf('test_models/chr%s_%s_x_%s_600KSNP_%.0frep.txt',chr,pheno,env,reps),quote=F,row.names=F)
+print(system.time({
+   results=lapply(n_reps,randomized_gwas)
+}))
+
+saveRDS(results,sprintf('test_models/chr%s_%s_x_%s_600KSNP_%srep.rds',chr,pheno,env,grp))

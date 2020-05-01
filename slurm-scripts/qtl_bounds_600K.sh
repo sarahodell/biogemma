@@ -6,26 +6,26 @@
 #SBATCH -t 48:00:00
 #SBATCH --ntasks=4
 #SBATCH --mem=4G
+#SBATCH --array=1-50%10
 
 module load R
 
-chr=8
-#chr=$SLURM_ARRAY_TASK_ID
+pheno="$(sed "${SLURM_ARRAY_TASK_ID}q;d" pheno_env_list.txt | cut -f1 -d,)"
+env="$(sed "${SLURM_ARRAY_TASK_ID}q;d" pheno_env_list.txt | cut -f2 -d,)"
 
-while read pheno; do
-    echo $pheno
-    while read env; do
-	if [ $env == "ALL" ]
-	then
-	    echo "ALL environments"
-	    Rscript GridLMM_600K_blup_QTLbounds.R $pheno $chr 4
-	else
-      	    echo $env
-       	    Rscript GridLMM_600K_QTLbounds.R $pheno $env $chr 4
-	fi
-    done < env_list.txt
-done < pheno_list.txt
+echo $pheno
+echo $env
 
+for c in {1..10};do
+    if [ $env == "ALL" ]
+    then
+	echo "ALL environments"
+	Rscript GridLMM_600K_blup_QTLbounds.R $pheno $c 4
+    else
+	echo "Specific environment"
+	Rscript GridLMM_600K_QTLbounds.R $pheno $env $c 4
+    fi
+done
 
 
 

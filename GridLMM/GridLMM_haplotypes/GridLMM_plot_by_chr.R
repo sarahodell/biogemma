@@ -14,11 +14,12 @@ library('ggplot2')
 library('data.table')
 library('dplyr')
 
-base_list=c(7,10,6,7,9,9,8,9,8,2)
+base_list=c(10,9,9,10,7,10,6,9,9,10)
+#base_list=c(7,10,6,7,9,9,8,9,8,2)
 all_chroms=c()
 
 for(i in 1:10){
-   pmap=fread(sprintf('../qtl2_startfiles/Biogemma_pmap_c%.0f.csv',i),data.table=F)
+   pmap=fread(sprintf('../genotypes/qtl2/startfiles/Biogemma_pmap_c%.0f.csv',i),data.table=F)
    ID=c()
    pos=c()
    bin=c()
@@ -26,7 +27,7 @@ for(i in 1:10){
    hapgrp=c()
    base=base_list[i]
    for(h in base:16){
-      mod=readRDS(sprintf('models/Biogemma_chr%.0f_haplogrp%.0f_%s_x_%s.rds',i,h,pheno,env))
+      mod=readRDS(sprintf('GridLMM_haplotypes/models/Biogemma_chr%.0f_haplogrp%.0f_%s_x_%s.rds',i,h,pheno,env))
       p=match(mod$X_ID,pmap$marker)
       phy_pos=pmap[p,]$pos
       ID=c(ID,mod$X_ID)
@@ -53,7 +54,7 @@ print(cutoff)
 all_chroms$sig = all_chroms$log10p>= cutoff
 label=sprintf('5%% Permutation Significance Threshold = %.3f',cutoff)
 
-png(sprintf('images/%s_x_%s_manhattan_sig.png',pheno,env),width=960,height=680)
+png(sprintf('GridLMM_haplotypes/images/%s_x_%s_manhattan_sig.png',pheno,env),width=960,height=680)
 theme_set(theme_classic())
 theme_update(text=element_text(family="Helvetica"))
 theme_update(plot.title = element_text(hjust = 0.5))
@@ -62,6 +63,3 @@ theme_update(panel.background=element_blank())
 
 print(ggplot(all_chroms,aes(x=pos/1e6,y=log10p)) + geom_point(aes(color=sig)) + scale_color_manual(breaks=all_chroms$sig,values=c("FALSE"="black","TRUE"="red")) + facet_grid(.~chr,scales="free") + ggtitle(sprintf("%s in %s Using Haplotype Probabilities",pheno,env)) + xlab("Chromosome (Mb)") + ylab("-log10(P-Value)") + guides(color=F) + labs(caption=label))
 dev.off()
-
-
-

@@ -13,8 +13,8 @@ full_gwas=c()
 for(i in seq(1,10)){
       tmp_gwas=c()
       for(p in phenotypes){
-      	    g=readRDS(sprintf('models/chr%.0f_%s_x_%s_600KSNP_ML.rds',i,p,env))$results
-  	    pmap=fread(sprintf('../../qtl2_startfiles/Biogemma_pmap_c%.0f.csv',i),data.table=F)
+      	    g=readRDS(sprintf('GridLMM_600KSNP/models/chr%.0f_%s_x_%s_600KSNP_ML.rds',i,p,env))$results
+  	    pmap=fread(sprintf('../genotypes/qtl2/startfiles/Biogemma_pmap_c%.0f.csv',i),data.table=F)
 	    gwas=g[,c('X_ID','p_value_ML')]
   	    gwas$chr=i
   	    m=match(gwas$X_ID,pmap$marker)
@@ -26,9 +26,9 @@ for(i in seq(1,10)){
 		tmp_gwas=gwas
 	    }else{
 	    	tmp_gwas=left_join(tmp_gwas,gwas[,c('SNP',pval)],by="SNP",keep=F)
-	    }		
+	    }
      }
      full_gwas=rbind(full_gwas,tmp_gwas)
 }
 
-fwrite(full_gwas,sprintf('600K_GWAS_%s_results.txt',env),row.names=F,quote=F,sep='\t')
+fwrite(full_gwas,sprintf('result_tables/600K_GWAS_%s_results.txt',env),row.names=F,quote=F,sep='\t')

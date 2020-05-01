@@ -12,6 +12,8 @@ reps=as.numeric(args[[5]])
 library('GridLMM')
 library('data.table')
 library('dplyr')
+library('parallel')
+library('MASS')
 
 all_reps=c()
 
@@ -26,16 +28,13 @@ colnames(K)=rownames(K)
 # Read in phenotypes
 # Grab the phenotype of interest and drop the genotypes not in the K matrix
 phenotypes=fread('../../phenotypes.csv',data.table=F)
-#print(dim(phenotypes))
 phenotypes=phenotypes[,c('Genotype_code','Loc.Year.Treat',pheno)]
-#print(dim(phenotypes))
 phenotypes$Genotype_code=gsub('-','.',phenotypes$Genotype_code)
 phenotypes=phenotypes[phenotypes$Genotype_code %in% rownames(K),]
 
-X_list=readRDS(sprintf('../../../geno_probs/bg%s_filtered_genotype_probs.rds',chr))
+X_list=readRDS(sprintf('../../../genotypes/probabilities/geno_probs/bg%s_filtered_genotype_probs.rds',chr))
 
-data=data.frame(ID=phenotypes$Genotype_code,ID2=phenotypes$Genotype_code,Loc.Year.Treat=phenotypes$Lo\
-c.Year.Treat,y=phenotypes[,c(pheno)],stringsAsFactors=F)
+data=data.frame(ID=phenotypes$Genotype_code,ID2=phenotypes$Genotype_code,Loc.Year.Treat=phenotypes$Loc.Year.Treat,y=phenotypes[,c(pheno)],stringsAsFactors=F)
 data=data[data$Loc.Year.Treat==env,]
 data=data[!is.na(data$y),]
 data$y=data$y - mean(data$y)
@@ -45,18 +44,39 @@ null_model = GridLMM_ML(y~1+(1|ID),data,relmat=list(ID=K),ML=T,REML=F,verbose=F)
 # Grab only genotypes in data
 X_list_full=lapply(X_list,function(x) x[data$ID,])
 
-for(b in 1:reps){
+mono=c()
+dimx=dim(X_list_full[[1]])[2]
+dimy=dim(X_list_full[[1]])[1]
+for(i in seq(1,dimx)){
+  grab=as.data.frame(lapply(X_list_full,function(x) x[,i]),stringsAsFactors = F)
+  names(grab)=as.character(seq(1,16))
+  grab_b=apply(grab,MARGIN=2,FUN=function(x) ifelse(x>=0.95,1,ifelse(x<=0.05,0,x)))
+  m=apply(grab_b,MARGIN=2,FUN=function(n) sum(n))
+  if(length(m[m==dimy])!=0){
+    mono=c(mono,i)
+  }
+}
+if(length(mono)>=1){
+  X_list_filtered=lapply(X_list_full,function(x) x[,-mono])
+}else{
+  X_list_filtered=X_list_full
+}
 
-### Randomly reassign genotypes to individuals
-   len=dim(X_list_full[[1]])[1]
+remove(X_list_full)
+remove(X_list)
+
+n_reps=seq(1,reps)
+
+randomized_gwas<-function(rep){
+   len=dim(X_list_filtered[[1]])[1]
 
    # Run GridLMM
 
    # randomize the order of the genotypes
    draw=sample(len,len,replace=F)
-   X_list_reordered=lapply(X_list_full,function(x) x[draw,])
-   for(x in seq(1,h)){
-       dimnames(X_list_reordered[[x]])[[1]]=dimnames(X_list_full[[1]])[[1]]
+   X_list_reordered=lapply(X_list_filtered,function(x) x[draw,])
+   for(x in seq(1,16)){
+       dimnames(X_list_reordered[[x]])[[1]]=dimnames(X_list_filtered[[1]])[[1]]
    }
 
    h2_start=null_model$results[,grepl('.ML',colnames(null_model$results),fixed=T),drop=FALSE]
@@ -70,13 +90,11 @@ for(b in 1:reps){
 
    gwas=run_GridLMM_GWAS(Y,X_cov,X_list_reordered[-1],X_list_null,V_setup=V_setup,h2_start=h2_start,method='ML',mc.cores=cores,verbose=F)
    gwas=gwas[!is.na(gwas$p_value_ML),]
-   tmp=data.frame(chr=chr,replicate=b,pval=min(gwas$p_value_ML))
-   all_reps=rbind(all_reps,tmp)
+   tmp=data.frame(chr=chr,replicate=rep,pval=min(gwas$p_value_ML))
 }
 
-all_reps=as.data.frame(all_reps)
-names(all_reps)=c('chr','replicate','pval')
+print(system.time({
+results=mclapply(n_reps,randomized_gwas,mc.cores=cores)
+}))
 
-fwrite(all_reps,sprintf('test_models/chr%s_%s_x_%s_founderprobs_%.0frep_max_pvalues.txt',chr,pheno,env,reps),quote=F,row.names=F,sep='\t')
-
-
+saveRDS(results,sprintf('test_models/chr%s_%s_x_%s_founderprobs_%.0frep_max_pvalues.rds',chr,pheno,env,reps))

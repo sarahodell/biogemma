@@ -39,17 +39,35 @@ data_blup=data_blup[,c('ID','y')]
 
 #map=fread(sprintf('../../qtl2_startfiles/Biogemma_pmap_c%s.csv',chr),data.table=F)
 
-geno=fread(sprintf('../../genotypes/qtl/Biogemma_DHgenos/DH_geno_chr%s_121718.csv',chr),data.table=F,stringsAsFactors=F)
-X=sapply(seq(1,dim(geno)[1]),function(x) ifelse(geno[x,2:dim(geno)[2]]=='A',0,1))
-X=t(X)
+X=fread(sprintf('../../genotypes/qtl2/Biogemma_DHgenos/bg%s_filtered_600K.csv',chr),data.table=F,stringsAsFactors=F)
+#X=sapply(seq(1,dim(geno)[1]),function(x) ifelse(geno[x,2:dim(geno)[2]]=='A',0,1))
+#X=t(X)
 print(dim(X))
-X=as.data.frame(X)
-rownames(X)=geno$ind
-colnames(X)=colnames(geno)[2:dim(geno)[2]]
+#X=as.data.frame(X)
+rownames(X)=X$ind
+X=X[,colnames(X)[2:dim(X)[2]]]
+#colnames(X)=colnames(X)[2:dim(X)[2]]
+#X=sapply(X,as.numeric)
 
 X=X[rownames(X) %in% data_blup$ID,]
 X=as.matrix(X)
-data=data[data$ID %in% rownames(X),]
+data_blup=data_blup[data_blup$ID %in% rownames(X),]
+
+dimr=dim(X)[1]
+#dimc=dim(X)[2]
+mono=c()
+m=apply(X,MARGIN=2,FUN=function(n) length(unique(n)))
+if(length(m[m==dimr]!=0)){
+  mono=c(mono,which(m==dimr))
+}
+if(length(mono)>=1){
+  X_filtered=X[,-mono]
+}else{
+  X_filtered=X
+}
+
+X=as.matrix(X_filtered)
+
 
 gwas_null = GridLMM_GWAS(
                         formula = y~1 + (1|ID),
@@ -109,7 +127,7 @@ gwas_marker = GridLMM_GWAS(
 
 gwas_null_drop=gwas_null$results[gwas_null$results$X_ID!=candidate_marker,]
 
-pmap=fread(sprintf('../../qtl2_startfiles/Biogemma_pmap_c%s.csv',chr),data.table=F)
+pmap=fread(sprintf('../../genotypes/qtl2/startfiles/Biogemma_pmap_c%s.csv',chr),data.table=F)
 p=match(gwas_null$results$X_ID,pmap$marker)
 phy_pos=pmap[p,]$pos
 chrom=data.frame(chrm=chr,ID=gwas_null$results$X_ID,pos=phy_pos,pvalues=gwas_null$results$p_value_ML,stringsAsFactors = F)

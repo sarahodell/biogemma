@@ -8,14 +8,12 @@ chr=as.character(args[[2]])
 cores=as.numeric(args[[3]])
 reps=as.numeric(args[[4]])
 
-#date=format(Sys.time(),'%m%d%y')
-
 library('GridLMM')
 library('data.table')
 library('dplyr')
 library('lme4')
-
-all_reps=c()
+library('parallel')
+library('MASS')
 
 # Read in Kinship Matrix
 K=fread(sprintf('../../K_matrices/K_matrix_chr%s.txt',chr),data.table=F)
@@ -43,22 +41,44 @@ null_model = GridLMM_ML(y~1 + (1|ID),data_blup,relmat=list(ID=K),ML=T,REML=F)
 
 # Read in the haplotype group probabilities
 # Filter genotypes that are not in the K matrix
-X_list=readRDS(sprintf('../../../geno_probs/bg%s_filtered_genotype_probs.rds',chr))
+X_list=readRDS(sprintf('../../../genotypes/probabilities/geno_probs/bg%s_filtered_genotype_probs.rds',chr))
 X_list_full=lapply(X_list,function(x) x[data_blup$ID,])
 
-for(r in 1:reps){
+mono=c()
+dimx=dim(X_list_full[[1]])[2]
+dimy=dim(X_list_full[[1]])[1]
+for(i in seq(1,dimx)){
+  grab=as.data.frame(lapply(X_list_full,function(x) x[,i]),stringsAsFactors = F)
+  names(grab)=as.character(seq(1,16))
+  grab_b=apply(grab,MARGIN=2,FUN=function(x) ifelse(x>=0.95,1,ifelse(x<=0.05,0,x)))
+  m=apply(grab_b,MARGIN=2,FUN=function(n) sum(n))
+  if(length(m[m==dimy])!=0){
+    mono=c(mono,i)
+  }
+}
+if(length(mono)>=1){
+  X_list_filtered=lapply(X_list_full,function(x) x[,-mono])
+}else{
+  X_list_filtered=X_list_full
+}
 
-   ### Randomly reassign genotypes to individuals
-   len=dim(X_list_full[[1]])[1]
-   draw=sample(len,len,replace=F)
-   
-   X_list_reordered=lapply(X_list_full,function(x) x[draw,])
-   for(x in seq(1,16)){
-       dimnames(X_list_reordered[[x]])[[1]]=dimnames(X_list_full[[1]])[[1]]
-   }
 
+remove(X_list_full)
+remove(X_list)
+
+n_reps=seq(1,reps)
+
+randomized_gwas<-function(rep){
+   len=dim(X_list_filtered[[1]])[1]
 
    # Run GridLMM
+
+   # randomize the order of the genotypes
+   draw=sample(len,len,replace=F)
+   X_list_reordered=lapply(X_list_filtered,function(x) x[draw,])
+   for(x in seq(1,16)){
+       dimnames(X_list_reordered[[x]])[[1]]=dimnames(X_list_filtered[[1]])[[1]]
+   }
 
    h2_start=null_model$results[,grepl('.ML',colnames(null_model$results),fixed=T),drop=FALSE]
    names(h2_start) = sapply(names(h2_start),function(x) strsplit(x,'.',fixed=T)[[1]][1])
@@ -69,10 +89,13 @@ for(r in 1:reps){
    X_cov=null_model$lmod$X
    X_list_null=NULL
 
-   gwas=run_GridLMM_GWAS(Y,X_cov,X_list_reordered[-1],X_list_null,V_setup=V_setup,h2_start=h2_start,method='ML',mc.cores=cores,verbose=T)
+   gwas=run_GridLMM_GWAS(Y,X_cov,X_list_reordered[-1],X_list_null,V_setup=V_setup,h2_start=h2_start,method='ML',mc.cores=cores,verbose=F)
    gwas=gwas[!is.na(gwas$p_value_ML),]
-   tmp=data.frame(chr=chr,replicate=r,pval=min(gwas$p_value_ML))
-   all_reps=rbind(all_reps,tmp)
+   tmp=data.frame(chr=chr,replicate=rep,pval=min(gwas$p_value_ML))
 }
 
-fwrite(all_reps,sprintf('test_models/chr%s_%s_x_ALL_founderprobs_%.0frep_max_pvalues.txt',chr,pheno,reps),quote=F,row.names=F,sep='\t')
+print(system.time({
+results=mclapply(n_reps,randomized_gwas,mc.cores=cores)
+}))
+
+saveRDS(results,sprintf('test_models/chr%s_%s_x_ALL_founderprobs_%.0frep_max_pvalues.rds',chr,pheno,reps))

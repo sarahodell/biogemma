@@ -1,0 +1,80 @@
+import pandas as pd
+
+pheno_env_all=[]
+with open('pheno_env_list_full.txt','r') as pheno_envfile:
+    for line in pheno_envfile:
+        pheno_env.append(line)
+
+PHENOS=[]
+ENVS=[]
+CHROMS=[]
+for i in pheno_env_all:
+    PHENOS.append(i.split('\t')[1]))
+    ENVS.append(i.split('\t')[2]))
+    CHROMS.append(i.split('\t')[3])
+
+MIN_HAPS={}
+haptable=pd.read_table('genotypes/probablities/haplotype_probs/min_haps.txt',header=None,names=['chr','min_hap'])
+for row in haptable.rows:
+    MIN_HAPS[row['chr']]=row['min_hap']
+
+rule all:
+    input:
+        expand("images/{pheno}_x_{env}_manhattan_sig.png",pheno=PHENOS,env=ENVS)
+
+
+rule germline:
+    input:
+        ped="genotypes/plink_files/600K/Biogemma_Founders_600K_chr${i}.ped".
+        map="genotypes/plink_files/600K/Biogemma_Founders_600K_chr${i}.map"
+    output:
+        "ibd_segments/germline/600K/Biogemma_Founders_germline_IBD_chr${i}.match"
+    params:
+        germline="/home/sodell//bin/germline-1-5-3/./germline",
+        minm=1,
+        errhom=4,
+        prefix="ibd_segments/germline/600K/Biogemma_Founders_germline_IBD_chr${i}"
+    run:
+        shell("{params.germline} -input {params.ped} {params.map} \
+         -min_m {params.minm} \
+         -err_hom {params.errhom} \
+         -w_extend \
+         -output {params.prefix}")
+
+
+rule get_haploprobs:
+    input:
+        "ibd_segments/germline/600K/Biogemma_Founders_germline_IBD_chr${i}.match"
+    output:
+        "ibd_segments/germline/600K/bg{i}_ibd_blocks_fixed.txt"
+    params:
+        chroms="{i}"
+    threads: 3
+    run:
+        shell("Rscript scripts/germline_haplotypes.R {params.chrom}")
+
+rule run_GridLMM:
+    input:
+        "ibd_segments/germline/600K/Biogemma_Founders_germline_IBD_chr${i}.match"
+    output:
+        "GridlMM/GridLMM_haplotypes/models/Biogemma_chr{i}_haplogrp{h}_{pheno}_x_{env}_adjusted.rds"
+    params:
+        base=lambda wcs: MIN_HAPS[wcs.i]
+    threads: 4
+    run:
+        shell("")
+        shell("Rscript GridLMM/GridLMM_haplotypes/GridLMM_pheno_x_env.R \
+        {params.pheno} {params.env} {params.chr} \
+         {params.hapgrp} {threads}")
+        shell("Rscript GridLMM/GridLMM_haplotypes/GridLMM_run.R \
+        {params.pheno} {params.chr} \
+         {params.hapgrp} {threads}")
+
+
+rule make_plots:
+    input:
+        "GridLMM/GridLMM_haplotypes/models/"
+    output:
+        "GridLMM/GridLMM_haplotypes/images/{pheno}_x_{env}_manhattan_sig.png""
+    run:
+        shell("Rscript GridLMM/GridLMM_haplotypes/GridLMM_plot_by_chr.R {params.pheno} {params.env}")

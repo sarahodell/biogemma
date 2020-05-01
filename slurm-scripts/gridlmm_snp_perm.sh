@@ -1,14 +1,14 @@
 #!/bin/bash -l
-#SBATCH -D /home/sodell/projects/impute/Biogemma_121318/GridLMM/GridLMM_600KSNP/permute/
+#SBATCH -D /home/sodell/projects/biogemma/GridLMM/GridLMM_600KSNP/permute/
 #SBATCH -J glm_perm
-#SBATCH -o /home/sodell/projects/impute/slurm-logs/out-%j.txt
-#SBATCH -e /home/sodell/projects/impute/slurm-logs/error-%j.txt
+#SBATCH -o /home/sodell/projects/biogemma/slurm-logs/out-%j.txt
+#SBATCH -e /home/sodell/projects/biogemma/slurm-logs/error-%j.txt
 #SBATCH -t 24:00:00
 #SBATCH --array=1-5000%100
 #SBATCH --ntasks=1
 #SBATCH --mem=4G
 
-module load R/3.6.1
+module load R
 
 # Permuation 1000 times
 # Permuation 1000 times
@@ -23,10 +23,10 @@ echo $chr
 if [ $env == "ALL" ]
 then
     echo "ALL environments"
-    Rscript GridLMM_600K_perm3.R $pheno $chr $rep 1 100
+    Rscript GridLMM_600K_perm.R $pheno $chr $rep 1 100
 else
     echo "Specific environment"
-    Rscript GridLMM_600K_pheno_x_env3.R $pheno $env $chr $rep 1 100
+    Rscript GridLMM_600K_pheno_x_env.R $pheno $env $chr $rep 1 100
 fi
 
 

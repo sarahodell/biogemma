@@ -9,12 +9,13 @@ library('dplyr')
 library('ggplot2')
 
 options(scipen=20)
+base=c(10,9,9,10,7,10,6,9,9,10)
 
 all_reps=c()
 for(c in 1:10){
-   haps=seq(2,16)
+   haps=seq(base[c],16)
    for(h in haps){
-         r=readRDS(sprintf('test_models/chr%.0f_haplogroup%.0f_%s_x_%s_1000rep_max_pvalues.rds',c,h,pheno,env))
+         r=readRDS(sprintf('GridLMM_haplotypes/permute_haplo/test_models/chr%.0f_haplogroup%.0f_%s_x_%s_1000rep_max_pvalues.rds',c,h,pheno,env))
 	 df=c()
 	 df=sapply(seq(1,1000),function(x) rbind(df,unlist(r[[x]])))
 	 df=t(df)
@@ -35,7 +36,7 @@ print(-log10(threshold))
 method="haplotype_probs"
 
 line=data.table(phenotype=pheno,environment=env,method=method,threshold=-log10(threshold))
-fwrite(line,file="../threshold_table.txt",sep=',',append=T)
+fwrite(line,file="threshold_table.txt",sep=',',append=T)
 
 
 #png(sprintf('%s_x_%s_perm_1000_pval_dist.png',pheno,env))
@@ -45,8 +46,3 @@ fwrite(line,file="../threshold_table.txt",sep=',',append=T)
 #png(sprintf('%s_x_%s_perm_1000_log10pval_dist.png',pheno,env))
 #print(ggplot(minp,aes(x=-log10(pval))) + geom_histogram() + geom_vline(xintercept=-log10(threshold)))
 #dev.off()
-
-
-
-
-

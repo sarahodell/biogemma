@@ -45,8 +45,23 @@ rownames(X)=X$ind
 X=X[,2:dim(X)[2]]
 
 X=X[rownames(X) %in% data$ID,]
-X=as.matrix(X)
 data=data[data$ID %in% rownames(X),]
+
+dimr=dim(X)[1]
+#dimc=dim(X)[2]
+mono=c()
+m=apply(X,MARGIN=2,FUN=function(n) length(unique(n)))
+if(length(m[m==dimr]!=0)){
+  mono=c(mono,which(m==dimr))
+}
+if(length(mono)>=1){
+  X_filtered=X[,-mono]
+}else{
+  X_filtered=X
+}
+
+X=as.matrix(X_filtered)
+
 
 gwas = GridLMM_GWAS(
                         formula = y~1 + (1|ID),

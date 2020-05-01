@@ -28,6 +28,8 @@ magicsim/
 *.pdf
 *.ibd
 *.hbd
+*.ibd.gz
+*.hbd.gz
 *.log
 *.r2.filtered
 *.match
