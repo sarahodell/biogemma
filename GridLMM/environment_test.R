@@ -2,6 +2,7 @@
 
 args=commandArgs(trailingOnly=T)
 e=as.character(args[[1]])
+p=as.character(args[[2]])
 
 
 library('ggplot2')
@@ -15,14 +16,14 @@ library('cowplot')
 library('readr')
 library('ggrepel')
 library('RColorBrewer')
-
+pheno=paste0(p,'_P')
 founders=c("A632_usa","B73_inra","CO255_inra","FV252_inra","OH43_inra", "A654_inra","FV2_inra","C103_inra","EP1_inra","D105_inra","W117_inra","B96","DK63","F492","ND245","VA85")
 
 threshtable=fread('threshold_table.txt',data.table=F)
 
 threshtable=threshtable[threshtable$environment==e,]
 threshtable$phenotype=paste0(threshtable$phenotype,"_P")
-threshtable=threshtable[threshtable$phenotype=="male_flowering_d6_P",]
+threshtable=threshtable[threshtable$phenotype==pheno,]
 
 gg.manhattan2 <- function(df, threshold, col, ylims){
   # format df
@@ -95,11 +96,11 @@ snpthresh=threshtable[threshtable$method=="600K_SNP",]
 #snpthresh=snpthresh[,c('phenotype','threshold')]
 mypalette=gray.colors(5)
 #mypalette <- c("#E2709A", "#CB4577", "#BD215B", "#970F42", "#75002B")
-threshold=snpthresh[snpthresh$phenotype=="male_flowering_d6_P",]$threshold
+threshold=snpthresh[snpthresh$phenotype==pheno,]$threshold
 
 
-title=sprintf("SNP GWAS %s",e)
-df=snp_gwas[,c('SNP','CHR','BP','male_flowering_d6_P')]
+title=sprintf("SNP GWAS %s %s",e,p)
+df=snp_gwas[,c('SNP','CHR','BP',pheno)]
 
 a2<-gg.manhattan2(df,threshold,
              col=mypalette,
@@ -107,10 +108,10 @@ a2<-gg.manhattan2(df,threshold,
 
 fp_gwas=fread(sprintf('result_tables/Founder_GWAS_%s_results.txt',e),data.table=F)
 fpthresh=threshtable[threshtable$method=="founder_probs",]
-fpthresh=fpthresh[fpthresh$phenotype=="male_flowering_d6_P",]$threshold
+fpthresh=fpthresh[fpthresh$phenotype==pheno,]$threshold
 
-title=sprintf("Founder GWAS %s",e)
-df=fp_gwas[,c('SNP','CHR','BP','male_flowering_d6_P')]
+title=sprintf("Founder GWAS %s %s",e,p)
+df=fp_gwas[,c('SNP','CHR','BP',pheno)]
 b2<-gg.manhattan2(df,fpthresh,
              col=mypalette,
              ylims=c(0,10)) + labs(caption = title)
@@ -119,10 +120,10 @@ b2<-gg.manhattan2(df,fpthresh,
 hp_gwas=fread(sprintf('result_tables/Haplotype_GWAS_%s_results.txt',e),data.table=F)
 hp_gwas=hp_gwas[,!names(hp_gwas) %in% "HAPGRP"]
 hpthresh=threshtable[threshtable$method=="haplotype_probs",]
-hpthresh=hpthresh[hpthresh$phenotype=="male_flowering_d6_P",]$threshold
+hpthresh=hpthresh[hpthresh$phenotype==pheno,]$threshold
 
-title=sprintf("Haplotype GWAS %s",e)
-df=hp_gwas[,c('SNP','CHR','BP','male_flowering_d6_P')]
+title=sprintf("Haplotype GWAS %s %s",e,p)
+df=hp_gwas[,c('SNP','CHR','BP',pheno)]
 
 c2<-gg.manhattan2(df,hpthresh,
              col=mypalette,
@@ -140,6 +141,6 @@ c2<-gg.manhattan2(df,hpthresh,
                ncol=1
              )
 
-png(sprintf('result_tables/Methods_Fig3_%s_x_male_flowering_d6.png',e),width=2000,height=1500)
+png(sprintf('result_tables/Methods_Fig3_%s_x_%s.png',e,p),width=2000,height=1500)
 print(plot_grid(prow))
 dev.off()

@@ -15,7 +15,7 @@ pheno="$(sed "${SLURM_ARRAY_TASK_ID}q;d" pheno_env_list_full.txt | cut -f1 -d,)"
 env="$(sed "${SLURM_ARRAY_TASK_ID}q;d" pheno_env_list_full.txt | cut -f2 -d,)"
 chr="$(sed "${SLURM_ARRAY_TASK_ID}q;d" pheno_env_list_full.txt | cut -f3 -d,)"
 
-base_list=(10 9 9 10 7 10 6 9 9 10)
+base_list=(blank 8 7 7 8 6 7 6 8 7 7)
 #base_list=(blank 7 10 6 7 9 9 8 9 8 2)
 base=$(echo ${base_list[$SLURM_ARRAY_TASK_ID]})
 hap_list=$(echo $(seq $base 16))
@@ -46,11 +46,3 @@ done
 #for hapgrp in $hap_list; do
 #    Rscript GridLMM_randomized_pheno_x_env3.R $pheno $env $chr $hapgrp 4 1000
 #done
-
-
-
-
-
-
-
-

@@ -6,7 +6,7 @@ args=commandArgs(trailingOnly=T)
 env=as.character(args[[1]])
 
 #env="BLOIS_2014_OPT"
-phenotypes=c("male_flowering_d6","female_flowering_d6","total_plant_height","grain_yield_15","tkw_15","harvest_grain_moisture")
+phenotypes=c("male_flowering_d6","male_flowering_days","female_flowering_d6","female_flowering_days","total_plant_height","grain_yield_15","tkw_15","harvest_grain_moisture")
 
 
 full_gwas=c()

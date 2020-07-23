@@ -4,8 +4,10 @@ library('dplyr')
 
 args=commandArgs(trailingOnly=T)
 env=as.character(args[[1]])
-phenotypes=c("male_flowering_d6","female_flowering_d6","total_plant_height","grain_yield_15","tkw_15","harvest_grain_moisture")
-base=c(10,9,9,10,7,10,6,9,9,10)
+phenotypes=c("male_flowering_d6","male_flowering_days","female_flowering_d6","female_flowering_days","total_plant_height","grain_yield_15","tkw_15","harvest_grain_moisture")
+
+#base=c(10,9,9,10,7,10,6,9,9,10)
+base=c(8,7,7,8,6,7,6,8,7,7)
 
 full_gwas=c()
 for(i in seq(1,10)){

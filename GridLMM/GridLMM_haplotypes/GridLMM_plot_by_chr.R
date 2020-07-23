@@ -14,7 +14,7 @@ library('ggplot2')
 library('data.table')
 library('dplyr')
 
-base_list=c(10,9,9,10,7,10,6,9,9,10)
+base_list=c(8,7,7,8,6,7,6,8,7,7)
 #base_list=c(7,10,6,7,9,9,8,9,8,2)
 all_chroms=c()
 

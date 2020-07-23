@@ -10,7 +10,7 @@
 
 module load R
 
-base_list=(blank 10 9 9 10 7 10 6 9 9 10)
+base_list=(blank 8 7 7 8 6 7 6 8 7 7)
 #base_list=(blank 6 10 6 7 9 9 9 9 8 7)
 
 pheno="$(sed "${SLURM_ARRAY_TASK_ID}q;d" pheno_env_list_full.txt | cut -f1 -d,)"

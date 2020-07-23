@@ -133,7 +133,7 @@ geom_point(aes(color=sig)) +
 dev.off()
 
 og_mod=readRDS(sprintf('models/Biogemma_chr%s_%s_x_ALL_founderprobs_adjusted.rds',chr,pheno))
-sig_markers=unique(og_mod[-log10(og_mod$p_value_ML)>cutoff,]$X_ID,mod[-log10(mod$p_value_ML)>cutoff,]$X_ID)
+sig_markers=unique(c(og_mod[-log10(og_mod$p_value_ML)>cutoff,]$X_ID,mod[-log10(mod$p_value_ML)>cutoff,]$X_ID))
 
 comp=data.frame(marker=sig_markers)
 comp$null=-log10(og_mod[match(sig_markers,og_mod$X_ID),]$p_value_ML)

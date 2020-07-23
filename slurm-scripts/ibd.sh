@@ -4,13 +4,13 @@
 #SBATCH -o /home/sodell/projects/biogemma/slurm-logs/out-%j.txt
 #SBATCH -e /home/sodell/projects/biogemma/slurm-logs/error-%j.txt
 #SBATCH -t 24:00:00
-#SBATCH --array=1-10
+#SBATCH --array=1-10%3
 #SBATCH --ntasks=3
 #SBATCH --mem 23G
 
 module load R
 
-#Rscript qtl2.R 
+#Rscript qtl2.R
 #Rscript sim_geno.R
 #Rscript bg_percentage.R
 #Rscript control_file.R
@@ -18,7 +18,7 @@ module load R
 #Rscript ibd_segments.R $SLURM_ARRAY_TASK_ID
 #Rscript wgs_genoprobs.R
 #Rscript recode_ibd.R
-#Rscript bg_coverage.R 
+#Rscript bg_coverage.R
 #Rscript ibd_blocks.R $SLURM_ARRAY_TASK_ID
 #Rscript bg_coverage.R $SLURM_ARRAY_TASK_ID
 

@@ -13,23 +13,26 @@ library('abind')
 
 founders=c("A632_usa","B73_inra","CO255_inra","FV252_inra","OH43_inra", "A654_inra","FV2_inra","C103_inra","EP1_inra","D105_inra","W117_inra","B96","DK63","F492","ND245","VA85")
 
-founders2=c("A632","B73","CO255","FV252","OH43", "A654","FV2","C103","EP1","D105","W117","B96","DK63","F492","ND245","VA85")
+#founders2=c("A632","B73","CO255","FV252","OH43", "A654","FV2","C103","EP1","D105","W117","B96","DK63","F492","ND245","VA85")
 
-ibd=read_table2(sprintf('ibd_segments/germline/600K/Biogemma_Founders_germline_IBD_chr%s.match',c),col_names = F)
-ibd=as.data.frame(ibd,stringsAsFactors=F)
-for(i in seq(1,dim(ibd)[1])){
-      if(!(ibd[i,]$X1 %in% founders)){
-      	f2=which(founders2==ibd[i,]$X1)
-        ibd[i,]$X1=founders[f2]
-
-	f2=which(founders2==ibd[i,]$X3)
-  	ibd[i,]$X3=founders[f2]
-  }
-}
+ibd=fread(sprintf('ibd_segments/refinedibd/600K/Biogemma_600K_Founders_RefinedIBD_chr%s.ibd',c),data.table = F)
+#ibd=read_table2(sprintf('ibd_segments/germline/600K/Biogemma_Founders_germline_IBD_chr%s.match',c),col_names = F)
+#ibd=as.data.frame(ibd,stringsAsFactors=F)
+#for(i in seq(1,dim(ibd)[1])){
+#      if(!(ibd[i,]$X1 %in% founders)){
+#      	f2=which(founders2==ibd[i,]$X1)
+#        ibd[i,]$X1=founders[f2]
+#
+#	f2=which(founders2==ibd[i,]$X3)
+#  	ibd[i,]$X3=founders[f2]
+#  }
+#}
 
 #ibd=ibd[,c(1,3,5:15)]
 
-names(ibd)=c('ID_1','Family_ID_1','ID_2','Family_ID2','Chromosome','left_pos','right_pos','left_marker','right_marker','n_markers','Genetic_length','Genetic_length_units','n_mismatch','ID1_Is_Homozygous','ID2_Is_Homozygous')
+#names(ibd)=c('ID_1','Family_ID_1','ID_2','Family_ID2','Chromosome','left_pos','right_pos','left_marker','right_marker','n_markers','Genetic_length','Genetic_length_units','n_mismatch','ID1_Is_Homozygous','ID2_Is_Homozygous')
+names(ibd)=c('ID_1','Hap_ID1','ID_2','Hap_ID2','Chromosome','left_pos','right_pos','LOD','cM_length')
+ibd=ibd[ibd$ID_1!="MBS847" & ibd$ID_2 !="MBS847",]
 
 #ibd=ibd[ibd$ID_1!="MBS847" & ibd$ID_2!="MBS847",]
 ibd=ibd[order(ibd$left_pos),]
@@ -40,12 +43,12 @@ print("Finished formating IBD file")
 
 genofile=sprintf("genotypes/probabilities/geno_probs/raw/bg%s_genoprobs_010319.rds",c)
 pmapfile=sprintf("genotypes/qtl2/startfiles/Biogemma_pmap_c%s.csv",c)
-outfile=sprintf("genotypes/probabilities/haplotype_probs/bg%s_haplotype_probs_030320.rds",c)
+outfile=sprintf("genotypes/probabilities/haplotype_probs/bg%s_refined_ibd_haplotype_probs.rds",c)
 
 # Read in IBD segments from get_ibd.R
 
 pmap=fread(pmapfile,data.table=F)
-founders=c("A632_usa","B73_inra","CO255_inra","FV252_inra","OH43_inra","A654_inra","FV2_inra","C103_inra","EP1_inra","D105_inra","W117_inra","B96","DK63","F492","ND245","VA85")
+#founders=c("A632_usa","B73_inra","CO255_inra","FV252_inra","OH43_inra","A654_inra","FV2_inra","C103_inra","EP1_inra","D105_inra","W117_inra","B96","DK63","F492","ND245","VA85")
 hap_founders=c("B73_inra","A632_usa","CO255_inra","FV252_inra","OH43_inra","A654_inra","FV2_inra","C103_inra","EP1_inra","D105_inra","W117_inra","B96","DK63","F492","ND245","VA85")
 
 ibd_segments=c()
@@ -107,8 +110,8 @@ names(ibd_segments)=c('chrom','start','end',hap_founders,'n_haps')
 #dimnames(ibd_graph)[[3]]=c("blank",ibd_segments$start)
 print("Finished making IBD block file")
 
-saveRDS(ibd_graph,sprintf('ibd_segments/germline/600K/bg%s_ibd_graph.rds',c))
-fwrite(ibd_segments,sprintf('ibd_segments/germline/600K/bg%s_ibd_blocks_fixed.txt',c),row.names=F,quote=F,sep='\t')
+saveRDS(ibd_graph,sprintf('ibd_segments/refinedibd/600K/bg%s_ibd_graph.rds',c))
+fwrite(ibd_segments,sprintf('ibd_segments/refinedibd/600K/bg%s_refined_ibd_blocks.txt',c),row.names=F,quote=F,sep='\t')
 
 pr=readRDS(genofile)
 samples=unlist(dimnames(pr[[1]])[1])
@@ -116,7 +119,7 @@ samples=unlist(dimnames(pr[[1]])[1])
 groups=sort(unique(as.integer(ibd_segments$n_haps)))
 
 line=data.table(chr=as.numeric(c),min_hap=min(groups))
-fwrite(line,file="../genotypes/probabilities/haplotype_probs/min_haps.txt",sep='\t',append=T,col.names=F,quote=F,row.names=F)
+fwrite(line,file="genotypes/probabilities/haplotype_probs/min_haps.txt",sep='\t',append=T,col.names=F,quote=F,row.names=F)
 
 final_haplo=vector("list",length=length(groups))
 names(final_haplo)=groups
