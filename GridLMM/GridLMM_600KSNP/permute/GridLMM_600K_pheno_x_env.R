@@ -35,7 +35,7 @@ data=data[data$Loc.Year.Treat==env,]
 data=data[!is.na(data$y),]
 data$y = data$y-mean(data$y)
 
-X=fread(sprintf('../../../genotypes/qtl2/Biogemma_DHgenos/bg%s_filtered_600K.csv',chr),data.table=F)
+X=fread(sprintf('../../../genotypes/qtl2/Biogemma_DHgenos/DH_geno_chr%s_binary.csv',chr),data.table=F)
 #X=sapply(seq(1,dim(geno)[1]),function(x) ifelse(geno[x,2:dim(geno)[2]]=='A',0,1))
 #X=t(X)
 #print(dim(X))
@@ -46,21 +46,6 @@ X=X[,2:dim(X)[2]]
 # Drop non-matching IDs
 X=X[rownames(X) %in% data$ID,]
 data=data[data$ID %in% rownames(X),]
-
-dimr=dim(X)[1]
-#dimc=dim(X)[2]
-mono=c()
-m=apply(X,MARGIN=2,FUN=function(n) length(unique(n)))
-if(length(m[m==dimr]!=0)){
-  mono=c(mono,which(m==dimr))
-}
-if(length(mono)>=1){
-  X_filtered=X[,-mono]
-}else{
-  X_filtered=X
-}
-
-X=as.matrix(X_filtered)
 
 all_gwas=c()
 

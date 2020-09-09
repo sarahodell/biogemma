@@ -21,15 +21,17 @@ options(scipen=999)
 
 #for each chromosome
 #read in files
-pr=readRDS(sprintf('Biogemma_082318/600K_DHgenoprobs/bg%s_0823_genoprobs.rds',c))
+pr=readRDS(sprintf('genotypes/probabilities/geno_probs/raw/bg%s_genoprobs_010319.rds',c))
 
 #Read in physical map
 #pmap=fread(sprintf('Biogemma_082318/Biogemma_pmap_c%s.csv',c),data.table=F)
 #pmap$pos=pmap$pos*1e6
 
-fgeno=fread(sprintf('biogemma/Biogemma_WGS_all_alleles_final_chr%s.txt',c),data.table=F)
+fgeno=fread(cmd=sprintf('gzip -dc genotypes/WGS/Biogemma_WGS_all_alleles_final_chr%s.txt.gz',c),data.table=F)
 #names(fgeno)=c('marker',founders)
-fgeno %>% mutute(pos=strsplit(marker,'_')[[1]][2])
+fgeno$V1=paste0('S',c,'_',fgeno$V2)
+names(fgeno)=c('marker','pos','ref','alt1',founders)
+#fgeno %>% mutute(pos=strsplit(marker,'_')[[1]][2])
 fgeno$pos=as.numeric(fgeno$pos)
 fgeno=fgeno[,c('marker','pos',founders)]
 

@@ -10,6 +10,9 @@ library('ggplot2')
 library('data.table')
 library('dplyr')
 
+#qtl_bounds=fread('Biogemma_QTL.csv',data.table=F)
+#qtl_bounds=qtl_bounds[qtl_bounds$Method=="600K_SNP" & qtl_bounds$Environment==env & qtl_bounds$Phenotype=pheno,]
+
 all_chroms=c()
 
 for(i in 1:10){
@@ -42,5 +45,10 @@ theme_update(plot.title = element_text(hjust = 0.5))
 theme_update(plot.title = element_text(size=26),axis.title=element_text(size=14,face="bold"))
 theme_update(panel.background=element_blank())
 
-print(ggplot(all_chroms,aes(x=pos/1e6,y=log10p)) + geom_point(aes(color=sig)) + scale_color_manual(breaks=all_chroms$sig,values=c("FALSE"="black","TRUE"="red")) + facet_grid(.~chr,scales="free") + ggtitle(sprintf("%s in %s Using 600K SNP Array",pheno,env)) + xlab("Chromosome (Mb)") + ylab("-log10(P-Value)") + guides(color=F) + labs(caption=label))
+print(ggplot(all_chroms,aes(x=pos/1e6,y=log10p)) + geom_point(aes(color=sig)) +
+ scale_color_manual(breaks=all_chroms$sig,values=c("FALSE"="black","TRUE"="red")) +
+  facet_grid(.~chr,scales="free") +
+   ggtitle(sprintf("%s in %s Using 600K SNP Array",pheno,env)) +
+    xlab("Chromosome (Mb)") + ylab("-log10(P-Value)") +
+     guides(color=F) + labs(caption=label))
 dev.off()

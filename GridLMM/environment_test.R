@@ -25,7 +25,12 @@ threshtable=threshtable[threshtable$environment==e,]
 threshtable$phenotype=paste0(threshtable$phenotype,"_P")
 threshtable=threshtable[threshtable$phenotype==pheno,]
 
-gg.manhattan2 <- function(df, threshold, col, ylims){
+qtl_bounds=fread('Biogemma_QTL.csv',data.table=F)
+
+
+
+
+gg.manhattan2 <- function(df, threshold, col, ylims,bounds){
   # format df
   df.tmp <- df %>%
 
@@ -56,6 +61,7 @@ gg.manhattan2 <- function(df, threshold, col, ylims){
   ggplot(df.tmp, aes(x=BPcum, y=-log10(value))) +
     # Show all points
     geom_point(aes(color=as.factor(CHR)), alpha=0.8, size=2) +
+
     scale_color_manual(values = rep(col, 22 )) +
 
     # custom X axis:
@@ -86,7 +92,6 @@ gg.manhattan2 <- function(df, threshold, col, ylims){
       panel.grid.major.x = element_blank(),
       panel.grid.minor.x = element_blank()
     ) + guides(color=F)
-
 }
 
 snp_gwas=fread(sprintf('result_tables/600K_GWAS_%s_results.txt',e),data.table=F)
@@ -98,13 +103,23 @@ mypalette=gray.colors(5)
 #mypalette <- c("#E2709A", "#CB4577", "#BD215B", "#970F42", "#75002B")
 threshold=snpthresh[snpthresh$phenotype==pheno,]$threshold
 
-
 title=sprintf("SNP GWAS %s %s",e,p)
 df=snp_gwas[,c('SNP','CHR','BP',pheno)]
 
 a2<-gg.manhattan2(df,threshold,
              col=mypalette,
-             ylims=c(0,10)) + labs(caption = title)
+             ylims=c(0,12)) + labs(caption = title)
+
+snp_bounds=qtl_bounds[qtl_bounds$Method=="600K_SNP" & qtl_bounds$Environment==e & qtl_bounds$Phenotype==p,]
+if(dim(snp_bounds)[1]!=0){
+  row.names(snp_bounds)=seq(1,dim(snp_bounds)[1])
+  for(i in 1:dim(snp_bounds)[1]){
+    rowdf=snp_bounds[i,]
+    start=rowdf$cum_left_bound_bp
+    end=rowdf$alt_cum_right_bound_bp
+    a2<-a2+geom_ribbon(aes_string(xmin=start,xmax=end),alpha=0.2,fill="coral2")
+  }
+}
 
 fp_gwas=fread(sprintf('result_tables/Founder_GWAS_%s_results.txt',e),data.table=F)
 fpthresh=threshtable[threshtable$method=="founder_probs",]
@@ -114,8 +129,19 @@ title=sprintf("Founder GWAS %s %s",e,p)
 df=fp_gwas[,c('SNP','CHR','BP',pheno)]
 b2<-gg.manhattan2(df,fpthresh,
              col=mypalette,
-             ylims=c(0,10)) + labs(caption = title)
+             ylims=c(0,12)) + labs(caption = title)
 
+
+fp_bounds=qtl_bounds[qtl_bounds$Method=="Founder_probs" & qtl_bounds$Environment==e & qtl_bounds$Phenotype==p,]
+if(dim(fp_bounds)[1]!=0){
+  row.names(fp_bounds)=seq(1,dim(fp_bounds)[1])
+  for(i in 1:dim(fp_bounds)[1]){
+    rowdf=fp_bounds[i,]
+    start=rowdf$cum_left_bound_bp
+    end=rowdf$alt_cum_right_bound_bp
+    b2<-b2+geom_ribbon(aes_string(xmin=start,xmax=end),alpha=0.2,fill="coral2")
+  }
+}
 
 hp_gwas=fread(sprintf('result_tables/Haplotype_GWAS_%s_results.txt',e),data.table=F)
 hp_gwas=hp_gwas[,!names(hp_gwas) %in% "HAPGRP"]
@@ -125,21 +151,34 @@ hpthresh=hpthresh[hpthresh$phenotype==pheno,]$threshold
 title=sprintf("Haplotype GWAS %s %s",e,p)
 df=hp_gwas[,c('SNP','CHR','BP',pheno)]
 
+
+
 c2<-gg.manhattan2(df,hpthresh,
              col=mypalette,
-             ylims=c(0,10))+ labs(caption = title)
+             ylims=c(0,12))+ labs(caption = title)
 
-             prow <- plot_grid(
-               a2 + theme(legend.position="none"),
-               b2 + theme(legend.position="none",strip.text.x=element_blank()),
-               c2 + theme(legend.position="none",axis.ticks=element_blank()),
+hp_bounds=qtl_bounds[qtl_bounds$Method=="Haplotype_probs" & qtl_bounds$Environment==e & qtl_bounds$Phenotype==p,]
+if(dim(hp_bounds)[1]!=0){
+  row.names(hp_bounds)=seq(1,dim(hp_bounds)[1])
+  for(i in 1:dim(hp_bounds)[1]){
+    rowdf=hp_bounds[i,]
+    start=rowdf$cum_left_bound_bp
+    end=rowdf$alt_cum_right_bound_bp
+    c2<-c2+geom_ribbon(aes_string(xmin=start,xmax=end),alpha=0.2,fill="coral2")
+  }
+}
 
-             #  align = 'vh',
-               labels = c("A", "B", "C"),
-               hjust = -1,
-               nrow = 3,
-               ncol=1
-             )
+prow <- plot_grid(
+  a2 + theme(legend.position="none"),
+  b2 + theme(legend.position="none",strip.text.x=element_blank()),
+  c2 + theme(legend.position="none",axis.ticks=element_blank()),
+  #  align = 'vh',
+  labels = c("A", "B", "C"),
+  hjust = -1,
+  nrow = 3,
+  ncol=1
+)
+
 
 png(sprintf('result_tables/Methods_Fig3_%s_x_%s.png',e,p),width=2000,height=1500)
 print(plot_grid(prow))

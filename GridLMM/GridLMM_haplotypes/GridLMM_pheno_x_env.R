@@ -39,7 +39,7 @@ data$y=data$y - mean(data$y)
 
 # Read in the haplotype group probabilities
 # Filter genotypes that are not in the K matrix
-X_list=readRDS(sprintf('../../genotypes/probabilities/haplotype_probs/bg%s_filtered_haplogroup%.0f_probs_2.rds',chr,h))
+X_list=readRDS(sprintf('../../genotypes/probabilities/haplotype_probs/RefinedIBD_600K/bg%s_filtered_haplogroup%.0f_probs.rds',chr,h))
 
 # Run GridLMM
 null_model = GridLMM_ML(y~1+(1|ID),data,relmat=list(ID=K),ML=T,REML=F)
@@ -61,21 +61,21 @@ gwas=run_GridLMM_GWAS(Y,X_cov,X_list_ordered[-1],X_list_null,V_setup=V_setup,h2_
 saveRDS(gwas,sprintf('models/Biogemma_chr%s_haplogrp%.0f_%s_x_%s.rds',chr,h,pheno,env))
 
 # Convert all very high and very low probabilities to 1 and 0, respectively
-X_list_full = lapply(X_list_ordered,function(x) sapply(seq(1,dim(x)[2]), function(i) ifelse(x[,i]>=0.99,1,ifelse(x[,i]<=1e-2,0,x[,i]))))
-for(i in 1:h){dimnames(X_list_full[[i]])[[2]]=dimnames(X_list_ordered[[i]])[[2]]}
+#X_list_full = lapply(X_list_ordered,function(x) sapply(seq(1,dim(x)[2]), function(i) ifelse(x[,i]>=0.99,1,ifelse(x[,i]<=1e-2,0,x[,i]))))
+#for(i in 1:h){dimnames(X_list_full[[i]])[[2]]=dimnames(X_list_ordered[[i]])[[2]]}
 
-gwas_adjusted=gwas
-sums=lapply(X_list_full,function(x) colSums(x))
-for(i in 1:h){
-    s=sums[[i]]
-    t=dim(X_list_full[[i]])[1]-2
-    l=2
-    grab=which(s>t,s)
-    grab=c(grab,which(s<l,s))
-    grab=sort(grab)
-    beta=sprintf('beta.%.0f',seq(1,h))
-    gwas_adjusted[grab,beta]=0
-    print(grab)
-}
+#gwas_adjusted=gwas
+#sums=lapply(X_list_full,function(x) colSums(x))
+#for(i in 1:h){
+#    s=sums[[i]]
+#    t=dim(X_list_full[[i]])[1]-2
+#    l=2
+#    grab=which(s>t,s)
+#    grab=c(grab,which(s<l,s))
+#    grab=sort(grab)
+#    beta=sprintf('beta.%.0f',seq(1,h))
+#    gwas_adjusted[grab,beta]=0
+#    print(grab)
+#}
 
-saveRDS(gwas_adjusted,sprintf('models/Biogemma_chr%s_haplogrp%.0f_%s_x_%s_adjusted.rds',chr,h,pheno,env))
+#saveRDS(gwas_adjusted,sprintf('models/Biogemma_chr%s_haplogrp%.0f_%s_x_%s_adjusted.rds',chr,h,pheno,env))

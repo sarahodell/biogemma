@@ -10,16 +10,16 @@ args=commandArgs(trailingOnly=TRUE)
 c = as.character(args[1])
 start = args[2]
 end = args[3]
-wgsfull=fread('biogemma/WGS_positions.txt',data.table=F,header=F)
+wgsfull=fread('genotypes/WGS/WGS_positions.txt',data.table=F,header=F)
 names(wgsfull)=c('chr','pos')
 #for each chromosome
 #read in files
-pr=readRDS(sprintf('Biogemma_082318/600K_DHgenoprobs/bg%s_0823_genoprobs.rds',c))
+pr=readRDS(sprintf('genotypes/probabilities/geno_probs/raw/bg%s_genoprobs_010319.rds',c))
 wgs=wgsfull[wgsfull$chr==c,]
 wgs=wgs %>% mutate(marker=paste0('S',chr,'_',pos))
 wgs=wgs[,c('marker','chr','pos')]
-pmap=fread(sprintf('Biogemma_082318/Biogemma_pmap_c%s.csv',c),data.table=F)
-pmap$pos=pmap$pos*1e6
+pmap=fread(sprintf('genotypes/qtl2/startfiles/Biogemma_pmap_c%s.csv',c),data.table=F)
+#pmap$pos=pmap$pos*1e6
 positions=rbind(wgs,pmap)
 positions=positions[order(positions$pos),]
 rownames(positions)=seq(1,nrow(positions))
@@ -77,4 +77,4 @@ for(i in seq(start,end)){
     new_ind=t(new_ind)
     prob_list[[name]]=new_ind
     saveRDS(prob_list,file=sprintf('bg%s_WGS_geno_probs.rds',c))
-}				      
+}

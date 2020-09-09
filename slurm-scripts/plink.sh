@@ -11,4 +11,4 @@ module load plink
 
 #plink --bfile Biogemma_DHLines_600K_Genotypes_binary --freqx --nonfounders --out ../ld_decay/Biogemma_DHLine_allele_freq
 
-plink --threads 24 --bfile genotypes/plink_files/600K/Biogemma_DHLines_600K_Genotypes_binary --r2 with-freqs inter-chr --out stats/ld_decay/Biogemma_DHLines_rsquared_all_chroms
+plink --threads 24 --bfile genotypes/plink_files/600K/Biogemma_DHLines_600K_Genotypes_binary --r2 with-freqs inter-chr --ld-window-r2 0.8 --out stats/ld_decay/Biogemma_DHLines_rsquared_all_chroms_high_only

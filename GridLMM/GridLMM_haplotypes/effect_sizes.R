@@ -11,15 +11,15 @@ library('dplyr')
 founders=c("A632_usa","B73_inra","CO255_inra","FV252_inra","OH43_inra",
            "A654_inra","FV2_inra","C103_inra","EP1_inra","D105_inra",
            "W117_inra","B96","DK63","F492","ND245","VA85")
+baselist=c(8,7,7,8,6,7,7,8,7,7)
 
-
-ibd=fread(sprintf('../ibd_segments/bg%s_ibd_blocks.txt',c),data.table=F)
-pmap=fread(sprintf('../qtl2_startfiles/Biogemma_pmap_c%s.csv',c),data.table=F)
+ibd=fread(sprintf('../../ibd_segments/refinedibd/600K/bg%s_refined_ibd_blocks.txt',c),data.table=F)
+pmap=fread(sprintf('../../genotypes/qtl2/startfiles/Biogemma_pmap_c%s.csv',c),data.table=F)
 
 all_effects=c()
 
-for(h in 2:16){
-      model=readRDS(sprintf('models/Biogemma_chr%s_haplogrp%.0f_%s_x_%s_adjusted.rds',c,h,pheno,env))
+for(h in baselist[as.numeric(c)]:16){
+      model=readRDS(sprintf('models/Biogemma_chr%s_haplogrp%.0f_%s_x_%s.rds',c,h,pheno,env))
       model_merge=merge(model,pmap,by.x="X_ID",by.y="marker")
       model_merge=model_merge[order(model_merge$pos),]
       row.names(model_merge)=seq(1,dim(model_merge)[1])
@@ -42,13 +42,23 @@ all_effects=as.data.frame(all_effects)
 names=c('chr','hapgrp','pos','marker','effect_size','founder')
 all_effects$hapgrp=as.factor(all_effects$hapgrp)
 
-png(sprintf('chr%s_%s_x_%s_effect_sizes_by_founder_by_hapgrp.png',c,pheno,env),width=960,height=960)
+png(sprintf('images/chr%s_%s_x_%s_effect_sizes_by_founder_by_hapgrp.png',c,pheno,env),width=960,height=960)
 print(ggplot(all_effects,aes(x=pos/1e6,y=effect_size)) + geom_point(aes(color=hapgrp)) + facet_wrap(~founder) + theme_classic() + theme(strip.text.x = element_text(size = 16)))
 dev.off()
 
-sub8=all_effects[all_effects$pos>134900000 & all_effects$pos < 136900000,]
+bounds=fread('../Biogemma_QTL.csv',data.table=F)
+mite_start=135.947816
+mite_end=135.946644
 
-png(sprintf('chr%s_%s_x_%s_effect_sizes_by_founder_by_hapgrp_zoom_vgt1.png',c,pheno,env),width=960,height=960)
+left_bound=bounds[bounds$Chromosome==c & bounds$Phenotype==pheno & bounds$Method=="Founder_probs" & bounds$Environment==env,]$left_bound_bp
+right_bound=bounds[bounds$Chromosome==c & bounds$Phenotype==pheno & bounds$Method=="Founder_probs" & bounds$Environment==env,]$alt_right_bound_bp
+
+if(left_bound/1e6 > mite_start){
+  left_bound=135e6
+}
+sub8=all_effects[all_effects$pos>left_bound & all_effects$pos < right_bound,]
+
+png(sprintf('images/chr%s_%s_x_%s_effect_sizes_by_founder_by_hapgrp_zoom_vgt1.png',c,pheno,env),width=960,height=960)
 print(ggplot(sub8,aes(x=pos/1e6,y=effect_size)) + geom_point(aes(color=hapgrp)) + facet_wrap(~founder) + geom_vline(xintercept=135.9) + geom_hline(yintercept=0,color="red") + ggtitle("Chr 8:107-173 Founder Effect Sizes") + theme_classic() + theme(strip.text.x = element_text(size = 16)))
 dev.off()
 
@@ -56,6 +66,6 @@ dev.off()
 #print(ggplot(all_effects,aes(x=pos/1e6,y=log10(abs(effect_size)))) + geom_point(aes(color=hapgrp)) + facet_wrap(~founder))
 #dev.off()
 
-png(sprintf('chr%s_%s_x_%s_effect_sizes_by_founder.png',c,pheno,env),width=800,height=530)
-print(ggplot(all_effects,aes(x=pos/1e6,y=effect_size)) + geom_jitter(aes(color=founder)) + geom_vline(xintercept=135) + ggtitle("Male Flowering Time BLUP Effect Sizes") + labs(subtitle="Chr. 8, Haplotype Probabilities") + theme(strip.text.x = element_text(size = 16)) + xlab("Position (Mb)") + ylab("Effect Size (ggd)"))
+png(sprintf('images/chr%s_%s_x_%s_effect_sizes_by_founder.png',c,pheno,env),width=800,height=530)
+print(ggplot(all_effects,aes(x=pos/1e6,y=effect_size)) + geom_jitter(aes(color=founder)) + geom_vline(xintercept=135) + ggtitle(sprintf("%s %s Effect Sizes",pheno,env)) + labs(subtitle="Chr. 8, Haplotype Probabilities") + theme(strip.text.x = element_text(size = 16)) + xlab("Position (Mb)") + ylab("Effect Size (ggd)"))
 dev.off()

@@ -43,7 +43,7 @@ print("Finished formating IBD file")
 
 genofile=sprintf("genotypes/probabilities/geno_probs/raw/bg%s_genoprobs_010319.rds",c)
 pmapfile=sprintf("genotypes/qtl2/startfiles/Biogemma_pmap_c%s.csv",c)
-outfile=sprintf("genotypes/probabilities/haplotype_probs/bg%s_refined_ibd_haplotype_probs.rds",c)
+outfile=sprintf("genotypes/probabilities/haplotype_probs/RefinedIBD_600K/bg%s_refined_ibd_haplotype_probs.rds",c)
 
 # Read in IBD segments from get_ibd.R
 
@@ -114,12 +114,43 @@ saveRDS(ibd_graph,sprintf('ibd_segments/refinedibd/600K/bg%s_ibd_graph.rds',c))
 fwrite(ibd_segments,sprintf('ibd_segments/refinedibd/600K/bg%s_refined_ibd_blocks.txt',c),row.names=F,quote=F,sep='\t')
 
 pr=readRDS(genofile)
+pmap=pmap[pmap$marker %in% dimnames(pr[[1]])[[3]],]
+pr=lapply(pr, function(x) x[,,pmap$marker])
+
+# Drop lines that don't have both phenotype and genotype data
+#K=fread(sprintf('GridLMM/K_matrices/K_matrix_chr%s.txt',c),data.table=F)
+#rownames(K)=K[,1]
+#rownames(K)=gsub("-",".",rownames(K))
+#K=as.matrix(K[,-1])
+#colnames(K)=rownames(K)
+
+#phenotypes=fread('GridLMM/phenotypes_asi.csv',data.table=F)
+#phenotypes$Genotype_code=gsub('-','.',phenotypes$Genotype_code)
+#phenotypes=phenotypes[phenotypes$Genotype_code %in% rownames(K),]
+#pheno_IDs=unique(phenotypes$Genotype_code)
+
+#pr=lapply(pr,function(x) x[pheno_IDs,,])
+#size=dim(pr[[1]])[3]
+#Remove sites with low founder representation
+# drop sites with summed founder prob of less than 1
+#f_sums=sapply(seq(1,size),function(x) colSums(pr[[1]][,,x]))
+#f_sums=t(f_sums)
+#low_rep=apply(f_sums,MARGIN=1,function(x) sum(x<1)==0)
+#pr=lapply(pr, function(x) x[,,low_rep])
+# drop sites with less than 5 lines with prob greater than .8
+#size=dim(pr[[1]])[3]
+#f_sums2=sapply(seq(1,size),function(x) colSums(pr[[1]][,,x]>=0.8))
+#low_rep2=apply(f_sums2,MARGIN=2,function(x) sum(x<5)==0)
+#pr=lapply(pr, function(x) x[,,low_rep2])
+#pmap=pmap[pmap$marker %in% dimnames(pr[[1]])[[3]],]
+
+size=dim(pr[[1]])[3]
 samples=unlist(dimnames(pr[[1]])[1])
 
 groups=sort(unique(as.integer(ibd_segments$n_haps)))
 
 line=data.table(chr=as.numeric(c),min_hap=min(groups))
-fwrite(line,file="genotypes/probabilities/haplotype_probs/min_haps.txt",sep='\t',append=T,col.names=F,quote=F,row.names=F)
+fwrite(line,file="genotypes/probabilities/haplotype_probs/RefinedIBD_600K/min_haps.txt",sep='\t',append=T,col.names=F,quote=F,row.names=F)
 
 final_haplo=vector("list",length=length(groups))
 names(final_haplo)=groups
@@ -143,6 +174,7 @@ for(h in groups){
       # grab the SNPs within these segments
       within=pmap[(pmap$pos < end) & (pmap$pos >= start),]
       if(dim(within)[1]!=0 & is.null(dim(within))==F){
+        within=within[within$marker %in% dimnames(pr[[1]])[[3]],]
         # get the founder probabilities of these SNPs
         prob=pr[[1]][n,,within$marker]
         line=test[i,]
@@ -152,6 +184,15 @@ for(h in groups){
         hprob=sapply(seq(1,n_hap), function(x) t(prob) %*% as.vector(line[,hap_founders]==x))
         hprobs=rbind(hprobs,hprob)
       }
+      #else{
+      #  lonemarker=pmap[pmap$pos==test$start,]$marker
+      #  prob=pr[[1]][n,,lonemarker]
+      #  line=test[i,]
+      #  markers=c(markers,lonemarker)
+      #  hprob=sapply(seq(1,n_hap), function(x) t(prob) %*% as.vector(line[,hap_founders]==x))
+      #  hprobs=rbind(hprobs,hprob)
+      #}
+
     }
     a=dim(hprobs)[1]
     b=dim(hprobs)[2]
@@ -164,9 +205,34 @@ for(h in groups){
     }
   }
   dimnames(haplo_probs)=list(samples,markers,seq(1,h))
+  haplo_probs=list(haplo_probs)
+  size=dim(haplo_probs[[1]])[2]
+
+
+  f_sums=sapply(seq(1,size),function(x) colSums(haplo_probs[[1]][,x,]))
+  low_rep=which(f_sums<1,arr.ind=T)
+  low_rep=as.data.frame(low_rep,stringsAsFactors=F)
+  which_f=unique(low_rep$row)
+  for(f in which_f){
+    cols=low_rep[low_rep$row==f,]$col
+    haplo_probs[[1]][,cols,f]=NA
+  }
+
+  # drop sites with less than 5 lines with prob greater than .8
+  #Remove sites with low haplotype representation
+  # drop sites with summed founder prob of less than 1
+  f_sums2=sapply(seq(1,size),function(x) colSums(haplo_probs[[1]][,x,]>=0.8))
+  low_rep2=which(f_sums2<5,arr.ind=T)
+  low_rep2=as.data.frame(low_rep2,stringsAsFactors=F)
+  which_f2=unique(low_rep2$row)
+  for(f in which_f2){
+    cols=low_rep2[low_rep2$row==f,]$col
+    haplo_probs[[1]][,cols,f]=NA
+  }
 # final_haplo[[h]]=haplo_probs
   regrp=c()
-  for(i in 1:h){regrp[[i]]=haplo_probs[,,i]}
+  for(i in 1:h){regrp[[i]]=haplo_probs[[1]][,,i]}
+  #r2 cutoff of 0.95
   cutoff=0.95
 
   # Filter Correlated Markers in Haplotype Probability
@@ -178,10 +244,11 @@ for(h in groups){
   keep=c(1)
   start=c()
   for(x in 1:h){start=c(start,as.vector(regrp[[x]][,1]))}
-  for(i in 2:dim(regrp[[1]])[2]){
+  size=dim(regrp[[1]])[2]
+  for(i in 1:size){
     ind_max = c()
     for(x in 1:h){ind_max=c(ind_max,as.vector(regrp[[x]][,i]))}
-    if(cor(start,ind_max)<cutoff){
+    if((cor(start,ind_max,use="complete.obs")**2)<cutoff){
       keep=c(keep,i)
       start=ind_max
       start_ind=i
@@ -193,7 +260,7 @@ for(h in groups){
     }
   }
 
-  saveRDS(dropped,sprintf('genotypes/probabilities/haplotype_probs/bg%s_haplogroup%s_dropped_markers.rds',c,h))
+  saveRDS(dropped,sprintf('genotypes/probabilities/haplotype_probs/RefinedIBD_600K/bg%s_haplogroup%s_dropped_markers.rds',c,h))
   filtered_hap=c()
   for(k in 1:h){filtered_hap[[k]]=regrp[[k]][,keep]}
   if(is.null(dim(filtered_hap[[1]]))){
@@ -202,7 +269,7 @@ for(h in groups){
       filtered_hap[[k]]=array(filtered_hap[[k]],dim=c(dimk,1),dimnames=list(names(filtered_hap[[k]]),m_names[keep]))
       }
   }
-  saveRDS(filtered_hap,sprintf('genotypes/probabilities/haplotype_probs/bg%s_filtered_haplogroup%s_probs_2.rds',c,h))
+  saveRDS(filtered_hap,sprintf('genotypes/probabilities/haplotype_probs/RefinedIBD_600K/bg%s_filtered_haplogroup%s_probs.rds',c,h))
   print("Finished filtering correlated markers")
   sprintf("Keeping %s markers in haplogroup %s on chromosome %s with correlation filter of %.2f",length(keep),h,c,cutoff)
   #final_haplo[[as.character(h)]]=haplo_probs

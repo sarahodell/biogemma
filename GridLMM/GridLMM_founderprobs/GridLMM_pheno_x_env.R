@@ -36,7 +36,7 @@ data$y = data$y - mean(data$y)
 
 # Read in the haplotype group probabilities
 # Filter genotypes that are not in the K matrix
-X_list=readRDS(sprintf('../../geno_probs/bg%s_filtered_genotype_probs.rds',chr))
+X_list=readRDS(sprintf('../../genotypes/probabilities/geno_probs/bg%s_filtered_genotype_probs.rds',chr))
 
 founders=c("A632_usa","B73_inra","CO255_inra","FV252_inra","OH43_inra", "A654_inra","FV2_inra","C103_inra","EP1_inra","D105_inra","W117_inra","B96","DK63","F492","ND245","VA85")
 
@@ -66,25 +66,22 @@ gwas=run_GridLMM_GWAS(Y,X_cov,X_list_ordered[-1],X_list_null,V_setup=V_setup,h2_
 saveRDS(gwas,sprintf('models/Biogemma_chr%s_%s_x_%s_founderprobs.rds',chr,pheno,env))
 
 # Convert all very high and very low probabilities to 1 and 0, respectively
-X_list_full = lapply(X_list_ordered,function(x) sapply(seq(1,dim(x)[2]), function(i) ifelse(x[,i]>=0.95,1,ifelse(x[,i]<=0.05,0,x[,i]))))
-dimnames(X_list_full[[1]])[[2]]=dimnames(X_list_ordered[[1]])[[2]]
+#X_list_full = lapply(X_list_ordered,function(x) sapply(seq(1,dim(x)[2]), function(i) ifelse(x[,i]>=0.95,1,ifelse(x[,i]<=0.05,0,x[,i]))))
+#dimnames(X_list_full[[1]])[[2]]=dimnames(X_list_ordered[[1]])[[2]]
 
-gwas_adjusted=gwas
-sums=lapply(X_list_full,function(x) colSums(x))
-for(i in 1:16){
-    s=sums[[i]]
-    t=dim(X_list_full[[i]])[1]-2
-    l=2
-    grab=which(s>t,s)
-    grab=c(grab,which(s<l,s))
-    grab=sort(grab)
-    beta=sprintf('beta.%.0f',seq(1,16))
-    gwas_adjusted[grab,beta]=0
-    gwas_adjusted[grap,'p_value_ML']=0.99
-    print(grab)
-}
+#gwas_adjusted=gwas
+#sums=lapply(X_list_full,function(x) colSums(x))
+#for(i in 1:16){
+#    s=sums[[i]]
+#    t=dim(X_list_full[[i]])[1]-2
+#    l=2
+#    grab=which(s>t,s)
+#    grab=c(grab,which(s<l,s))
+#    grab=sort(grab)
+#    beta=sprintf('beta.%.0f',seq(1,16))
+#    gwas_adjusted[grab,beta]=0
+#    gwas_adjusted[grap,'p_value_ML']=0.99
+#    print(grab)
+#}
 
-saveRDS(gwas_adjusted,sprintf('models/Biogemma_chr%s_%s_x_%s_founderprobs_adjusted.rds',chr,pheno,env))
-
-
-
+#saveRDS(gwas_adjusted,sprintf('models/Biogemma_chr%s_%s_x_%s_founderprobs_adjusted.rds',chr,pheno,env))

@@ -5,7 +5,7 @@ c=as.character(args[[1]])
 
 library('data.table')
 
-refined=fread(sprintf('ibd_segments/refinedibd/Biogemma_WGS_Founders_RefinedIBD_chr%s.ibd',c),data.table=F,header=F)
+refined=fread(sprintf('ibd_segments/refinedibd/WGS/Biogemma_WGS_Founders_RefinedIBD_chr%s.ibd',c),data.table=F,header=F)
 names(refined)=c('ID_1','ID_1_index','ID_2','ID_2_index','Chromosome','start','end','LOD','cM')
 refined$pair=paste0(refined$ID_1,'-',refined$ID_2)
 bed=refined[,c('Chromosome','start','end','pair')]

@@ -44,39 +44,20 @@ null_model = GridLMM_ML(y~1+(1|ID),data,relmat=list(ID=K),ML=T,REML=F,verbose=F)
 # Grab only genotypes in data
 X_list_full=lapply(X_list,function(x) x[data$ID,])
 
-mono=c()
-dimx=dim(X_list_full[[1]])[2]
-dimy=dim(X_list_full[[1]])[1]
-for(i in seq(1,dimx)){
-  grab=as.data.frame(lapply(X_list_full,function(x) x[,i]),stringsAsFactors = F)
-  names(grab)=as.character(seq(1,16))
-  grab_b=apply(grab,MARGIN=2,FUN=function(x) ifelse(x>=0.95,1,ifelse(x<=0.05,0,x)))
-  m=apply(grab_b,MARGIN=2,FUN=function(n) sum(n))
-  if(length(m[m==dimy])!=0){
-    mono=c(mono,i)
-  }
-}
-if(length(mono)>=1){
-  X_list_filtered=lapply(X_list_full,function(x) x[,-mono])
-}else{
-  X_list_filtered=X_list_full
-}
-
-remove(X_list_full)
 remove(X_list)
 
 n_reps=seq(1,reps)
 
 randomized_gwas<-function(rep){
-   len=dim(X_list_filtered[[1]])[1]
+   len=dim(X_list_full[[1]])[1]
 
    # Run GridLMM
 
    # randomize the order of the genotypes
    draw=sample(len,len,replace=F)
-   X_list_reordered=lapply(X_list_filtered,function(x) x[draw,])
+   X_list_reordered=lapply(X_list_full,function(x) x[draw,])
    for(x in seq(1,16)){
-       dimnames(X_list_reordered[[x]])[[1]]=dimnames(X_list_filtered[[1]])[[1]]
+       dimnames(X_list_reordered[[x]])[[1]]=dimnames(X_list_full[[1]])[[1]]
    }
 
    h2_start=null_model$results[,grepl('.ML',colnames(null_model$results),fixed=T),drop=FALSE]

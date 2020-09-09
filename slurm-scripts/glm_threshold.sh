@@ -1,37 +1,32 @@
 #!/bin/bash -l
 #SBATCH -D /home/sodell/projects/biogemma/GridLMM
 #SBATCH -J glm_threshold
-#SBATCH -o /home/sodell/projects/biogemma/slurm-logs/out-%j.txt
-#SBATCH -e /home/sodell/projects/biogemma/slurm-logs/error-%j.txt
+#SBATCH -o /home/sodell/projects/biogemma/slurm-logs/out-%A_%a.txt
+#SBATCH -e /home/sodell/projects/biogemma/slurm-logs/error-%A_%a.txt
 #SBATCH -t 500:00:00
-#SBATCH --array=1-50%10
 #SBATCH --ntasks=4
 #SBATCH --mem=4G
 
 module load R
 
+for i in {1..50}; do
 # Permuation 1000 times
-pheno="$(sed "${SLURM_ARRAY_TASK_ID}q;d" pheno_env_list.txt | cut -f1 -d,)"
-env="$(sed "${SLURM_ARRAY_TASK_ID}q;d" pheno_env_list.txt | cut -f2 -d,)"
+  pheno="$(sed "${i}q;d" pheno_env_list.txt | cut -f1 -d,)"
+  env="$(sed "${i}q;d" pheno_env_list.txt | cut -f2 -d,)"
+  #pheno="harvest_grain_moisture"
+  #env="BLOIS_2014_OPT"
+  echo $pheno
+  echo $env
 
-echo $pheno
-echo $env
+  #Haplotype threshold
+  Rscript GridLMM_haplotypes/permute_haplo/find_threshold.R $pheno $env
+  wait
+  #Founder threshold
+  Rscript GridLMM_founderprobs/permute/find_threshold.R $pheno $env
+  wait
+  #600K threshold
+  Rscript GridLMM_600KSNP/permute/find_threshold.R $pheno $env
+  wait
+done
 
-#Haplotype threshold
-Rscript GridLMM_haplotypes/permute_haplo/find_threshold.R $pheno $env
-
-#Founder threshold
-Rscript GridLMM_founderprobs/permute/find_threshold.R $pheno $env
-
-#600K threshold
-Rscript GridLMM_600KSNP/permute/find_threshold.R $pheno $env
-
-
-
-
-
-
-
-
-
-
+echo "Finished array task $SLURM_ARRAY_TASK_ID" >> report.txt

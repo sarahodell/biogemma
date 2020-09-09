@@ -4,7 +4,6 @@
 #SBATCH -o /home/sodell/projects/biogemma/slurm-logs/out-%j.txt
 #SBATCH -e /home/sodell/projects/biogemma/slurm-logs/error-%j.txt
 #SBATCH -t 24:00:00
-#SBATCH --array=1-500%50
 #SBATCH --ntasks=8
 #SBATCH --mem 63G
 
@@ -12,13 +11,13 @@ module load openblas
 module load gsl
 module load gemma
 
-pheno="$(sed "${SLURM_ARRAY_TASK_ID}q;d" pheno_env_list_full.txt | cut -f1 -d,)"
-env="$(sed "${SLURM_ARRAY_TASK_ID}q;d" pheno_env_list_full.txt | cut -f2 -d,)"
-chr="$(sed "${SLURM_ARRAY_TASK_ID}q;d" pheno_env_list_full.txt | cut -f3 -d,)"
-#pheno="male_flowering_d6"
-#env="BLOIS_2014_OPT"
+#pheno="$(sed "${SLURM_ARRAY_TASK_ID}q;d" rerun_pheno_env_list.txt | cut -f1 -d,)"
+#env="$(sed "${SLURM_ARRAY_TASK_ID}q;d" rerun_pheno_env_list.txt | cut -f2 -d,)"
+#chr="$(sed "${SLURM_ARRAY_TASK_ID}q;d" rerun_pheno_env_list.txt | cut -f3 -d,)"
+pheno="grain_yield_15"
+env="NERAC_2016_WD"
+chr=2
 #chr=$SLURM_ARRAY_TASK_ID
-#chr=10
 if [ ! -d /scratch/sodell ]; then
   mkdir /scratch/sodell ;
 fi

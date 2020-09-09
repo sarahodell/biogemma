@@ -5,8 +5,8 @@
 #SBATCH -e /home/sodell/projects/biogemma/slurm-logs/error-%j.txt
 #SBATCH -t 24:00:00
 #SBATCH --array=1-50%10
-#SBATCH --ntasks=2
-#SBATCH --mem 15G
+#SBATCH --ntasks=3
+#SBATCH --mem 23G
 
 module load R
 

@@ -7,6 +7,13 @@ hap_n=args[[2]]
 #date=format(Sys.time(), "%m%d%y")
 
 hap=readRDS(sprintf('bg%s_haplotype_probs_010319.rds',c))
+pmap=fread(sprintf('../../qtl2/startfiles/Biogemma_pmap_c%s.csv',chr),data.table=F)
+pmap=pmap[order(pmap$pos),]
+rownames(pmap)=seq(1,dim(pmap)[1])
+for(h in 1:length(hap)){
+  hap_markers=dimnames(hap)[[2]]
+}
+hap=lapply(hap,function(x) x[,,pmap$marker]
 
 m_names=names(hap[[1]][1,])
 dropped=list()

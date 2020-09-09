@@ -38,33 +38,18 @@ data_blup$ID = rownames(data_blup)
 data_blup$y=data_blup$`(Intercept)`
 data_blup=data_blup[,c('ID','y')]
 
-X=fread(sprintf('../../../genotypes/qtl2/Biogemma_DHgenos/bg%s_filtered_600K.csv',chr),data.table=F)
+X=fread(sprintf('../../../genotypes/qtl2/Biogemma_DHgenos/DH_geno_chr%s_binary.csv',chr),data.table=F)
 #X=sapply(seq(1,dim(geno)[1]),function(x) ifelse(geno[x,2:dim(geno)[2]]=='A',0,1))
 #X=t(X)
-print(dim(X))
-#X=as.data.frame(X)
+#print(dim(X))
+#X=as.data.frame(X,stringsAsFactors=F)
 #rownames(X)=geno$ind
 #colnames(X)=colnames(geno)[2:dim(geno)[2]]
-
 rownames(X)=X$ind
 X=X[,2:dim(X)[2]]
 # Drop non-matching IDs
 X=X[rownames(X) %in% data_blup$ID,]
 data_blup=data_blup[data_blup$ID %in% rownames(X),]
-
-dimr=dim(X)[1]
-#dimc=dim(X)[2]
-mono=c()
-m=apply(X,MARGIN=2,FUN=function(n) length(unique(n)))
-if(length(m[m==dimr]!=0)){
-  mono=c(mono,which(m==dimr))
-}
-if(length(mono)>=1){
-  X_filtered=X[,-mono]
-}else{
-  X_filtered=X
-}
-X=as.matrix(X_filtered)
 
 n_reps=seq(1,reps)
 

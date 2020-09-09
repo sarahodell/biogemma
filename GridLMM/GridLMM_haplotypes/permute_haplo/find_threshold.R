@@ -9,7 +9,7 @@ library('dplyr')
 library('ggplot2')
 
 options(scipen=20)
-base=c(10,9,9,10,7,10,6,9,9,10)
+base=c(8,7,7,8,6,7,7,8,7,7)
 
 all_reps=c()
 for(c in 1:10){
@@ -39,10 +39,10 @@ line=data.table(phenotype=pheno,environment=env,method=method,threshold=-log10(t
 fwrite(line,file="threshold_table.txt",sep=',',append=T)
 
 
-#png(sprintf('%s_x_%s_perm_1000_pval_dist.png',pheno,env))
+#png(sprintf('GridLMM_haplotypes/permute_haplo/images/%s_x_%s_perm_1000_pval_dist.png',pheno,env))
 #print(ggplot(minp,aes(x=pval)) + geom_histogram() + geom_vline(xintercept=threshold))
 #dev.off()
 
-#png(sprintf('%s_x_%s_perm_1000_log10pval_dist.png',pheno,env))
-#print(ggplot(minp,aes(x=-log10(pval))) + geom_histogram() + geom_vline(xintercept=-log10(threshold)))
-#dev.off()
+png(sprintf('GridLMM_haplotypes/permute_haplo/images/%s_x_%s_perm_1000_log10pval_dist.png',pheno,env))
+print(ggplot(minp,aes(x=-log10(pval))) + geom_histogram() + geom_vline(xintercept=-log10(threshold)))
+dev.off()

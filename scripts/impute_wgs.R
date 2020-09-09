@@ -3,13 +3,16 @@
 library('data.table')
 library('dplyr')
 library('tibble')
+library('parallel')
+library('MASS')
 
 args=commandArgs(trailingOnly=TRUE)
 chr=as.character(args[[1]])
+cores=args[[2]]
 
 genofile=sprintf('genotypes/probabilities/geno_probs/raw/bg%s_genoprobs_010319.rds',chr)
-#imputefile=sprintf('gzip -dc genotypes/WGS/Biogemma_WGS_all_alleles_final_chr%s.txt.gz',chr)
-imputefile=sprintf('gzip -dc /scratch/sodell/Biogemma_WGS_all_alleles_final_chr%s.txt.gz',chr)
+imputefile=sprintf('gzip -dc genotypes/WGS/Biogemma_WGS_all_alleles_final_chr%s.txt.gz',chr)
+#imputefile=sprintf('gzip -dc /scratch/sodell/Biogemma_WGS_all_alleles_final_chr%s.txt.gz',chr)
 pmapfile=sprintf('genotypes/qtl2/startfiles/Biogemma_pmap_c%s.csv',chr)
 outfile=sprintf('genotypes/probabilities/allele_probs/bg%s_wgs_alleleprobs_bimbam.txt',chr)
 
@@ -22,9 +25,14 @@ names(binfinal)=c("marker","pos","alt1","ref",founders)
 binfinal[,5:20] = ifelse(binfinal[,5:20]=="0/0",0,ifelse(binfinal[,5:20]=="1/1",1,NA))
 binfinal$marker=paste0('S',chr,'_',binfinal$pos)
 # Remove sites with more than 25% of founders missing
-no_missing=rowSum(is.na(binfinal[,5:20]))
+no_missing=rowSums(is.na(binfinal[,5:20]))
 drops=no_missing>=4
 binfinal=binfinal[!drops,]
+rownames(binfinal)=seq(1,dim(binfinal)[1])
+
+# Remove sites with alt or ref alleles that aren't A,C,T, or G
+nts=c("A","C","G","T")
+binfinal=binfinal[binfinal$alt1 %in% nts,]
 rownames(binfinal)=seq(1,dim(binfinal)[1])
 
 #Turn all NA values to zero for calculating allele frequency.
@@ -38,6 +46,8 @@ for(i in 5:20){
     ind=which(is.na(binfinal[,i]))
     binfinal[ind,i]=freq[ind]
 }
+
+
 
 options(scipen=999)
 
@@ -68,8 +78,10 @@ alt1=binfinal$alt1
 ref=binfinal$ref
 remove(binfinal)
 all_probs=c()
-for( i in seq(1,size)){
-    print(i)
+
+
+interpolate <- function(i){
+    #print(i)
     ind=pr[[1]][i,,]
     ind=t(ind)
     ind=as.data.frame(ind)
@@ -89,20 +101,27 @@ for( i in seq(1,size)){
     }
     f_probs=t(as.matrix(f_probs))
     allele_probs=rowSums(sub*f_probs)
-    all_probs=rbind(all_probs,allele_probs)
+    tmp=data.frame(marker=markers,allele_prob=allele_probs,stringsAsFactors=F)
 }
+
+n_reps=seq(1,size)
+
+print(system.time({
+results=mclapply(n_reps,interpolate,mc.cores=cores)
+}))
+
 print("Finished calculating allele probabilities")
-all_probs_t=t(all_probs)
+#all_probs_t=t(all_probs)
 #remove(all_probs)
-all_probs_t=as.data.frame(all_probs_t,stringsAsFactors=F)
+#all_probs_t=as.data.frame(all_probs_t,stringsAsFactors=F)
+
+all_probs_t=as.data.frame(lapply(results,function(x) x$allele_prob),stringsAsFactors=F)
 names(all_probs_t)=samples
 all_probs_t$marker=markers
 #all_probs_t=rownames_to_column(all_probs_t,"marker")
 all_probs_t$alt1=alt1
 all_probs_t$ref=ref
 all_probs_t=all_probs_t[,c('marker','alt1','ref',samples)]
-
-
 print("Converting from alternate allele to minor allele")
 freq=rowSums(all_probs_t[4:dim(all_probs_t)[2]])/(dim(all_probs_t)[2]-3)
 min_allele=freq<=0.5
@@ -119,11 +138,11 @@ bimbam=function(i,df){
 }
 
 df_edit <- bimbam(is_major,all_probs_t)
-
+remove(all_probs_t)
 # Set frequencies from 0..2
 df_edit[,4:dim(df_edit)[2]] = df_edit[,4:dim(df_edit)[2]]*2
 df_edit_o=na.omit(df_edit)
-
+remove(df_edit)
 print("Writing allele probs to file")
 fwrite(df_edit_o,outfile,row.names=F,sep=',',quote=F,col.names=F)
 #system(sprintf("gzip %s",outfile))

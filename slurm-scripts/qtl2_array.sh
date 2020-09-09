@@ -1,14 +1,13 @@
 #!/bin/bash -l
-#SBATCH -D /home/sodell/projects/impute/Biogemma_050719
+#SBATCH -D /home/sodell/projects/biogemma
 #SBATCH -J qtl2
-#SBATCH -o /home/sodell/projects/impute/slurm-logs/out-%j.txt
-#SBATCH -e /home/sodell/projects/impute/slurm-logs/error-%j.txt
+#SBATCH -o /home/sodell/projects/biogemma/slurm-logs/out-%j.txt
+#SBATCH -e /home/sodell/projects/biogemma/slurm-logs/error-%j.txt
 #SBATCH -t 96:00:00
-#SBATCH --array=1-10%5
-#SBATCH --ntasks=8
-#SBATCH --mem=64G
+#SBATCH --ntasks=6
+#SBATCH --mem=45G
 
-module load R/3.5.2
+module load R
 
 
 #chr=${bob[$SLURM_ARRAY_TASK_ID]}
@@ -17,17 +16,8 @@ module load R/3.5.2
 #json="Biogemma_WGS_c${chr}_${block}.json"
 #echo $json
 #Rscript qtl2_array.R $SLURM_ARRAY_TASK_ID
-
-echo $SLURM_ARRAY_TASK_ID
+chr=1
+#chr=$SLURM_ARRAY_TASK_ID
+echo $chr
 #Rscript Biogemma_121318/wgs_alleleprobs.R $SLURM_ARRAY_TASK_ID
-Rscript qtl2_array.R $SLURM_ARRAY_TASK_ID
-
-
-
-
-
-
-
-
-
-
+Rscript scripts/qtl2_array.R $chr 4

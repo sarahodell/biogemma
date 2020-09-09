@@ -57,4 +57,4 @@ fwrite(pair_list3,sprintf("ibd_segments/comparison/c%s_germline_wgs_ibdseq_pair_
 # GERMLINE 600K and RefinedIBD
 
 pair_list4=data.frame(name=intersect(int_1$name,refined$name),stringsAsFactors=F)
-fwrite(pair_list4,sprintf("ibd_segments/comparison/c%s_germline_600K_RefinedIBD_pair_list.txt",c),row.names=F,quote=F,col.names=F,sep='\t')
+fwrite(pair_list4,sprintf("ibd_segments/comparison/c%s_germline_WGS_RefinedIBD_pair_list.txt",c),row.names=F,quote=F,col.names=F,sep='\t')

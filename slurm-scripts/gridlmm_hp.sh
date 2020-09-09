@@ -10,7 +10,7 @@
 
 module load R
 
-base_list=(blank 8 7 7 8 6 7 6 8 7 7)
+base_list=(blank 8 7 7 8 6 7 7 8 7 7)
 #base_list=(blank 6 10 6 7 9 9 9 9 8 7)
 
 pheno="$(sed "${SLURM_ARRAY_TASK_ID}q;d" pheno_env_list_full.txt | cut -f1 -d,)"
@@ -27,17 +27,8 @@ for hapgrp in ${hap_list[@]}; do
     echo $hapgrp
     if [ $env == "ALL" ]
     then
-	Rscript GridLMM_run.R $pheno $chr $hapgrp 4
+	     Rscript GridLMM_run.R $pheno $chr $hapgrp 4
     else
-	Rscript GridLMM_pheno_x_env.R $pheno $env $chr $hapgrp 4
+	     Rscript GridLMM_pheno_x_env.R $pheno $env $chr $hapgrp 4
     fi
 done
-
-
-
-
-
-
-
-
-

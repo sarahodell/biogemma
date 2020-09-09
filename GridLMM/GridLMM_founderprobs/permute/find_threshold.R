@@ -35,10 +35,10 @@ line=data.table(phenotype=pheno,environment=env,method=method,threshold=-log10(t
 fwrite(line,file="threshold_table.txt",sep=',',append=T)
 
 
-#png(sprintf('%s_x_%s_perm_1000_pval_dist.png',pheno,env))
+#png(sprintf('GridLMM_founderprobs/permute/images/%s_x_%s_perm_1000_pval_dist.png',pheno,env))
 #print(ggplot(minp,aes(x=pval)) + geom_histogram() + geom_vline(xintercept=threshold))
 #dev.off()
 
-#png(sprintf('%s_x_%s_perm_1000_log10pval_dist.png',pheno,env))
-#print(ggplot(minp,aes(x=-log10(pval))) + geom_histogram() + geom_vline(xintercept=-log10(threshold)))
-#dev.off()
+png(sprintf('GridLMM_founderprobs/permute/images/%s_x_%s_perm_1000_log10pval_dist.png',pheno,env))
+print(ggplot(minp,aes(x=-log10(pval))) + geom_histogram() + geom_vline(xintercept=-log10(threshold)))
+dev.off()

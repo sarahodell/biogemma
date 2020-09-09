@@ -21,20 +21,27 @@ for(c in 1:10){
 all_chroms$chr=as.factor(all_chroms$chr)
 all_chroms$log10p = -log10(all_chroms$pvalues)
 size=dim(all_chroms)[1]
+
+#FDR Benjamini Hochberg
 #all_chroms=all_chroms[order(all_chroms$pvalues),]
 #rownames(all_chroms)=seq(1,size)
+#all_chroms$rank=seq(1,size)
+#Q=0.05
+#all_chroms$qvalues=(all_chroms$rank*Q)/size
+#all_chroms$log10q=-log10(all_chroms$qvalues)
+#threshold=all_chroms[min(all_chroms[all_chroms$pvalues>all_chroms$qvalues,]$rank),]$log10q
 
 print("Created all_chroms")
-#thresh_table=fread('threshold_table.txt',data.table=F,stringsAsFactors=F)
-#rec=thresh_table$phenotype==pheno & thresh_table$environment==env & thresh_table$method=="600K_SNP"
-#cutoff=thresh_table[rec,]$threshold
-cutoff=7
-#print(cutoff)
+thresh_table=fread('GridLMM/threshold_table.txt',data.table=F,stringsAsFactors=F)
+rec=thresh_table$phenotype==pheno & thresh_table$environment==env & thresh_table$method=="600K_SNP"
+cutoff=thresh_table[rec,]$threshold
+#cutoff=7
+print(cutoff)
 
 all_chroms$sig = all_chroms$log10p>= cutoff
 # Grab only 10% lowest p-values
 all_chroms=all_chroms[all_chroms$pvalues <= quantile(all_chroms$pvalues,0.1,lower.tail=T),]
-label=sprintf('Significance Threshold = %.3f',cutoff)
+label=sprintf('5%% Permutation Significance Threshold = %.2f',round(cutoff,2))
 
 print("Plotting")
 png(sprintf('gemma/images/%s_x_%s_GEMMA_WGS.png',pheno,env),width=960,height=680)
