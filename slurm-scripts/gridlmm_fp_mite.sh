@@ -1,8 +1,8 @@
 #!/bin/bash -l
 #SBATCH -D /home/sodell/projects/biogemma/GridLMM/MITE_only
 #SBATCH -J glm_fp
-#SBATCH -o /home/sodell/projects/biogemma/slurm-logs/out-%j.txt
-#SBATCH -e /home/sodell/projects/biogemma/slurm-logs/error-%j.txt
+#SBATCH -o /home/sodell/projects/biogemma/slurm-logs/%A_%a.out
+#SBATCH -e /home/sodell/projects/biogemma/slurm-logs/%A_%a.error
 #SBATCH -t 48:00:00
 #SBATCH --array=1-10%5
 #SBATCH --ntasks=4
@@ -14,7 +14,7 @@ module load R
 pheno="male_flowering_d6"
 chr=$SLURM_ARRAY_TASK_ID
 
-    
+
 while read env; do
     if [ $env == "ALL" ]
     then
@@ -25,14 +25,3 @@ while read env; do
 	Rscript GridLMM_pheno_x_env.R $pheno $env $chr 4
     fi
 done < env_list.txt
-
-
-
-
-
-
-
-
-
-
-

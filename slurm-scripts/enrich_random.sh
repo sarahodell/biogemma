@@ -1,16 +1,14 @@
 #!/bin/bash -l
 #SBATCH -D /home/sodell/projects/biogemma
-#SBATCH -J chisq
+#SBATCH -J enrichment
 #SBATCH -o /home/sodell/projects/biogemma/slurm-logs/%A_%a.out
 #SBATCH -e /home/sodell/projects/biogemma/slurm-logs/%A_%a.error
-#SBATCH -t 24:00:00
-#SBATCH --array=1-10
+#SBATCH -t 48:00:00
+#SBATCH --array=1-5000%100
 #SBATCH --ntasks=1
-#SBATCH --mem 8G
+#SBATCH --mem 1G
 
 module load R
 
-chr=$SLURM_ARRAY_TASK_ID
-
-Rscript scripts/selection_scan.R $chr
-Rscript scripts/haplo_selection_scan.R $chr
+rep=$SLURM_ARRAY_TASK_ID
+Rscript scripts/enrichments_randomization.R $rep

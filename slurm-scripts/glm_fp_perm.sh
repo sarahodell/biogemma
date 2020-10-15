@@ -1,9 +1,9 @@
 #!/bin/bash -l
 #SBATCH -D /home/sodell/projects/biogemma/GridLMM/GridLMM_founderprobs/permute
 #SBATCH -J glm_perm
-#SBATCH -o /home/sodell/projects/biogemma/slurm-logs/out-%j.txt
-#SBATCH -e /home/sodell/projects/biogemma/slurm-logs/error-%j.txt
-#SBATCH -t 24:00:00
+#SBATCH -o /home/sodell/projects/biogemma/slurm-logs/%A_%a.out
+#SBATCH -e /home/sodell/projects/biogemma/slurm-logs/%A_%a.error
+#SBATCH -t 48:00:00
 #SBATCH --array=1-500%50
 #SBATCH --ntasks=4
 #SBATCH --mem=4G
@@ -24,15 +24,3 @@ else
     echo "Specific environment"
     Rscript GridLMM_randomized_pheno_x_env.R $pheno $env $chr 4 1000
 fi
-
-
-
-
-
-
-
-
-
-
-
-

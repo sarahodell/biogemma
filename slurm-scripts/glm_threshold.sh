@@ -3,11 +3,16 @@
 #SBATCH -J glm_threshold
 #SBATCH -o /home/sodell/projects/biogemma/slurm-logs/out-%A_%a.txt
 #SBATCH -e /home/sodell/projects/biogemma/slurm-logs/error-%A_%a.txt
-#SBATCH -t 500:00:00
+#SBATCH -t 24:00:00
 #SBATCH --ntasks=4
 #SBATCH --mem=4G
 
 module load R
+
+if [ -f threshold_table.txt ]; then
+  rm threshold_table.txt
+fi
+
 
 for i in {1..50}; do
 # Permuation 1000 times

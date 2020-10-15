@@ -42,9 +42,12 @@ f_sums=sapply(seq(1,size),function(x) colSums(geno[[1]][,,x]))
 low_rep=which(f_sums<1,arr.ind=T)
 low_rep=as.data.frame(low_rep,stringsAsFactors=F)
 which_f=unique(low_rep$row)
+
+dropped=vector("list",length=16)
 for(f in which_f){
   cols=low_rep[low_rep$row==f,]$col
-  geno[[1]][,f,cols]=NA
+  #geno[[1]][,f,cols]=NA
+  dropped[[f]]=dimnames(geno[[1]])[[3]][cols]
 }
 
 # drop sites with less than 5 lines with prob greater than .8
@@ -55,8 +58,11 @@ low_rep2=as.data.frame(low_rep2,stringsAsFactors=F)
 which_f2=unique(low_rep2$row)
 for(f in which_f2){
   cols=low_rep2[low_rep2$row==f,]$col
-  geno[[1]][,f,cols]=NA
+  #geno[[1]][,f,cols]=NA
+  dropped[[f]]=unique(c(dropped[[f]],dimnames(geno[[1]])[[3]][cols]))
 }
+
+saveRDS(dropped,sprintf('genotypes/probabilities/geno_probs/dropped/bg%s_low_rep_markers.rds',chr))
 
 size=dim(geno[[1]])[3]
 m_names=names(geno[[1]][1,1,])

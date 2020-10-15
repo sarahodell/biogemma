@@ -3,7 +3,7 @@
 library('data.table')
 library('tidyverse')
 
-qtl=fread('Biogemma_QTL_update.csv',data.table=F)
+qtl=fread('Biogemma_QTL.csv',data.table=F)
 base_list=c(8,7,7,8,6,7,7,8,7,7)
 
 alt_right_bound_bp=c()
@@ -74,11 +74,20 @@ cum_left=c()
 cum_right=c()
 alt_cum_right=c()
 
+left_bound_cM=c()
+right_bound_cM=c()
+
 for(i in 1:dim(qtl)[1]){
   print(i)
+  chr=qtl[i,]$Chromosome
+  gmap=fread(sprintf('../genotypes/qtl2/startfiles/Biogemma_gmap_c%.0f.csv',chr),data.table=F)
   left_pos=qtl[i,]$left_bound_bp
   right_pos=qtl[i,]$right_bound_bp
   alt_right_pos=qtl[i,]$alt_right_bound_bp
+  left_snp=qtl[i,]$left_bound_snp
+  right_snp=qtl[i,]$alt_right_bound_snp
+  left_bound_cM=c(left_bound_cM,gmap[gmap$marker==left_snp,]$pos)
+  right_bound_cM=c(right_bound_cM,gmap[gmap$marker==right_snp,]$pos)
   total=0
   chr=qtl[i,]$Chromosome
   if(chr==1){
@@ -101,5 +110,8 @@ for(i in 1:dim(qtl)[1]){
 qtl$cum_left_bound_bp=cum_left
 qtl$cum_right_bound_bp=cum_right
 qtl$alt_cum_right_bound_bp=alt_cum_right
+qtl$left_bound_cM=left_bound_cM
+qtl$right_bound_cM=right_bound_cM
+qtl$size_cM=qtl$right_bound_cM - qtl$left_bound_cM
 
-fwrite(qtl,'Biogemma_QTL_update.csv',row.names=F,quote=F,sep=',')
+fwrite(qtl,'Biogemma_QTL.csv',row.names=F,quote=F,sep=',')

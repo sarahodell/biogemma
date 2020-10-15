@@ -10,7 +10,7 @@
 
 module load R
 
-if [ -f report.txt ]; do
+if [ -f report.txt ]; then
   rm report.txt
 fi
 

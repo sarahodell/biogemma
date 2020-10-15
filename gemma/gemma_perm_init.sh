@@ -4,8 +4,8 @@ module load openblas
 module load gsl
 module load gemma
 
-reps=100
-pheno_envs=50
+reps=3
+pheno_envs=2
 gemma=/home/sodell/bin/./gemma-0.98.1-linux-static
 
 # Report file to check that all permutations run successfully
@@ -32,12 +32,12 @@ for pheno_env in $(seq 1 $pheno_envs); do
   echo $pheno
   echo $env
   for rep in $(seq 1 $reps); do
-    time ./gemma_perm.sh $rep $pheno $env &
+    #srun -t 1:00:00 ./test.sh &
+    srun -t 4:00:00 ./gemma_perm.sh $rep $pheno $env &
     #pids[]{rep}]=$!
   done
 done
 
-wait
 
 #for pid in ${pids[*]}; do
 #  wait $pid

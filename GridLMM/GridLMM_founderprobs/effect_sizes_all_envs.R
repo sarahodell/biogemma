@@ -22,16 +22,27 @@ mlong_point=c()
 mite_start=135.947816
 mite_end=135.946644
 
+low_rep=readRDS(sprintf('../../genotypes/probabilities/geno_probs/dropped/bg%s_low_rep_markers.rds',c))
+
 for(env in environments){
   model=readRDS(sprintf('models/Biogemma_chr%s_%s_x_%s_founderprobs.rds',c,pheno,env))
   model_merge=merge(model,pmap,by.x="X_ID",by.y="marker")
   model_merge=model_merge[order(model_merge$pos),]
   row.names(model_merge)=seq(1,dim(model_merge)[1])
   betas=sprintf('beta.%.0f',seq(1,16))
-  sub = model_merge[,c(betas)]
-  names(sub)=founders
-  sub$pos=model_merge$pos
-  mlong=melt(sub,'pos')
+  # Discount effect sizes of low representation founder markers
+  for(f in 1:16){
+    low_markers=low_rep[[f]]
+    if(!is.null(low_markers)){
+      for(m in low_markers){
+        model_merge[model_merge$X_ID==m,paste0('beta.',f)]=NA
+      }
+    }
+  }
+  sub = model_merge[,c("X_ID",betas)]
+  names(sub)=c("X_ID",founders)
+  mlong=melt(sub,'X_ID')
+  mlong$pos=model_merge[match(mlong$X_ID,model_merge$X_ID),]$pos
   mlong$env=env
   left_bound=bounds[bounds$Chromosome==c & bounds$Phenotype==pheno & bounds$Method=="Founder_probs" & bounds$Environment==env,]$left_bound_bp
   right_bound=bounds[bounds$Chromosome==c & bounds$Phenotype==pheno & bounds$Method=="Founder_probs" & bounds$Environment==env,]$alt_right_bound_bp
@@ -46,7 +57,7 @@ for(env in environments){
   mlong_point=rbind(mlong_point,mlong_snp)
 }
 mlong_all=as.data.frame(mlong_all,stringsAsFactors=F)
-names(mlong_all)=c("pos","variable","value","env")
+names(mlong_all)=c("marker","variable","value","pos","env")
 
 
 png(sprintf('images/chr%s_%s__founderprobs_avg_effect_sizes_all_founders.png',c,pheno,env),width=960,height=960)

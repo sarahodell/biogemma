@@ -53,6 +53,36 @@ X_list=X_list[new_founders]
 X_list_order_1=lapply(X_list,function(x) x[data$ID,])
 has_mite=mite_prob[mite_prob$`AX-91102970`>=0.9,]$ID
 X_list_ordered=lapply(X_list_order_1,function(x) x[has_mite,])
+
+
+size=dim(X_list_ordered[[1]])[2]
+#Remove sites with low founder representation
+# drop sites with summed founder prob of less than 1
+f_sums=lapply(X_list_ordered,function(x) colSums(x))
+low_rep=lapply(f_sums,function(x) which(x<1,arr.ind=T))
+#low_rep=as.data.frame(low_rep,stringsAsFactors=F)
+#which_f=unique(low_rep$row)
+
+dropped=vector("list",length=16)
+for(f in 1:16){
+  cols=names(low_rep[[f]])
+  #geno[[1]][,f,cols]=NA
+  dropped[[f]]=cols
+}
+
+f_sums2=lapply(X_list_ordered,function(x) colSums(x>=0.8))
+low_rep2=lapply(f_sums2,function(x) which(x<5,arr.ind=T))
+#ow_rep2=as.data.frame(low_rep2,stringsAsFactors=F)
+#which_f2=unique(low_rep2$row)
+for(f in 1:16){
+  cols=names(low_rep2[[f]])
+  #geno[[1]][,f,cols]=NA
+  dropped[[f]]=unique(c(dropped[[f]],cols))
+}
+
+saveRDS(dropped,sprintf('../../genotypes/probabilities/geno_probs/dropped/bg%s_low_rep_markers_MITE_only.rds',chr))
+
+
 data=data[data$ID %in% has_mite,]
 Y=as.matrix(data$y)
 
@@ -70,24 +100,3 @@ X_list_null=NULL
 gwas=run_GridLMM_GWAS(Y,X_cov,X_list_ordered[-1],X_list_null,V_setup=V_setup,h2_start=h2_start,method='ML',mc.cores=cores,verbose=F)
 
 saveRDS(gwas,sprintf('models/Biogemma_chr%s_%s_x_%s_founderprobs_MITE_only.rds',chr,pheno,env))
-
-# Convert all very high and very low probabilities to 1 and 0, respectively
-X_list_full = lapply(X_list_ordered,function(x) sapply(seq(1,dim(x)[2]), function(i) ifelse(x[,i]>=0.95,1,ifelse(x[,i]<=0.05,0,x[,i]))))
-dimnames(X_list_full[[1]])[[2]]=dimnames(X_list_ordered[[1]])[[2]]
-
-gwas_adjusted=gwas
-sums=lapply(X_list_full,function(x) colSums(x))
-for(i in 1:16){
-    s=sums[[i]]
-    t=dim(X_list_full[[i]])[1]-2
-    l=2
-    grab=which(s>t,s)
-    grab=c(grab,which(s<l,s))
-    grab=sort(grab)
-    beta=sprintf('beta.%.0f',seq(1,16))
-    gwas_adjusted[grab,beta]=0
-    gwas_adjusted[grap,'p_value_ML']=0.99
-    print(grab)
-}
-
-saveRDS(gwas_adjusted,sprintf('models/Biogemma_chr%s_%s_x_%s_founderprobs_MITE_only_adjusted.rds',chr,pheno,env))
