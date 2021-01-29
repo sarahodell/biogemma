@@ -7,10 +7,10 @@ env=as.character(args[[1]])
 
 f_envs=c("BLOIS_2014_OPT","GRANEROS_2015_OPT","NERAC_2016_WD","ALL")
 if(env %in% f_envs){
-  phenotypes=c("male_flowering_d6","male_flowering_days","female_flowering_d6","female_flowering_days","total_plant_height","grain_yield_15","tkw_15","harvest_grain_moisture")
+  phenotypes=c("male_flowering_d6","male_flowering_days","female_flowering_d6","female_flowering_days","total_plant_height","grain_yield_15","tkw_15","harvest_grain_moisture","asi")
 
 }else{
-  phenotypes=c("male_flowering_d6","female_flowering_d6","total_plant_height","grain_yield_15","tkw_15","harvest_grain_moisture")
+  phenotypes=c("male_flowering_d6","female_flowering_d6","total_plant_height","grain_yield_15","tkw_15","harvest_grain_moisture","asi")
 }
 
 full_gwas=c()

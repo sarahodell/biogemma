@@ -12,7 +12,7 @@ module load perlbrew
 module load circos
 
 circostools=/home/sodell/bin/circos-tools-0.23/tools/bundlelinks
-linkfile=stats/ld_decay/circos/ld_links.txt
+linkfile=stats/ld_decay/circos/ld_links_interchrom.txt
 outfile=stats/ld_decay/circos/ld_bundled_links.txt
 
 cd $circostools

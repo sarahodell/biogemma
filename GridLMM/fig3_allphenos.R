@@ -2,8 +2,7 @@
 
 args=commandArgs(trailingOnly=T)
 e=as.character(args[[1]])
-p=as.character(args[[2]])
-thresh=as.numeric(args[[3]])
+thresh=as.numeric(args[[2]])
 
 
 library('ggplot2')
@@ -20,25 +19,33 @@ library('RColorBrewer')
 pheno=paste0(p,'_P')
 founders=c("A632_usa","B73_inra","CO255_inra","FV252_inra","OH43_inra", "A654_inra","FV2_inra","C103_inra","EP1_inra","D105_inra","W117_inra","B96","DK63","F492","ND245","VA85")
 
-threshtable=fread(sprintf('threshold_%.2f_table.txt',thresh),data.table=F)
+#col=c("Anthesis-Silking Interval"=mypalette[7],"Days to Silking" = mypalette[1],"Grain Yield"=mypalette[2],"Grain Moisture"=mypalette[3],"Days to Anthesis"=mypalette[4],"Thousand-Kernel Weight"=mypalette[5],"Plant Height"=mypalette[6])
+mypalette = c("#F8766D","#C49A00","#53B400","#00C094","#00B6EB","#A58AFF","#FF61C9")
+col=c("asi_P.FALSE"="black","female_flowering_d6_P.FALSE"="black","grain_yield_15_P.FALSE"="black",
+"harvest_grain_moisture_P.FALSE"="black","male_flowering_d6_P.FALSE"="black",
+ "tkw_15_P.FALSE"="black","total_plant_height_P.FALSE"="black","asi_P.TRUE"=mypalette[7],
+ "female_flowering_d6_P.TRUE"=mypalette[1],"grain_yield_15_P.TRUE"=mypalette[2],
+"harvest_grain_moisture_P.TRUE"=mypalette[3],"male_flowering_d6_P.TRUE"=mypalette[4],
+"tkw_15_P.TRUE"=mypalette[5] ,"total_plant_height_P.TRUE"=mypalette[6])
 
-threshtable=threshtable[threshtable$environment==e,]
-phenotypes=unique(threshtable$phenotype)
+labels=c("Anthesis-Silking Interval","Days to Silking","Grain Yield","Grain Moisture","Days to Anthesis","Thousand Kernel Weight","Plant Height")
 
-threshtable$phenotype=paste0(threshtable$phenotype,"_P")
+thresholdtable=fread(sprintf('threshold_%.2f_table.txt',thresh),data.table=F)
+
+thresholdtable=thresholdtable[thresholdtable$environment==e,]
+thresholdtable$phenotype=paste0(thresholdtable$phenotype,"_P")
+thresholdtable=thresholdtable[!(thresholdtable$phenotype %in% c("male_flowering_days_P","female_flowering_days_P")), ]
+
+rownames(thresholdtable)=seq(1,nrow(thresholdtable))
 #threshtable=threshtable[threshtable$phenotype==pheno,]
 
 qtl_bounds=fread('Biogemma_QTL.csv',data.table=F)
 
-mypalette = c("#F8766D","#C49A00","#53B400","#00C094","#00B6EB","#A58AFF","#FF61C9")
-pcol=list("asi_P"=mypalette[7],"female_flowering_d6_P" = mypalette[1],"grain_yield_15_P"=mypalette[2],"harvest_grain_moisture_P"=mypalette[3],"male_flowering_d6_P"=mypalette[4],"tkw_15_P"=mypalette[5],"total_plant_height_P"=mypalette[6])
+phenotypes=unique(thresholdtable$phenotype)
 
 
-
-gg.manhattan2 <- function(df, threshold, col, ylims,bounds){
-  # format df
+gg.manhattan2 <- function(df, threshtable, col, ylims,legend_labels=NULL){
   df.tmp <- df %>%
-
     # Compute chromosome size
     group_by(CHR) %>%
     summarise(chr_len=max(BP)) %>%
@@ -48,43 +55,41 @@ gg.manhattan2 <- function(df, threshold, col, ylims,bounds){
     select(-chr_len) %>%
 
     # Add this info to the initial dataset
-    left_join(df, ., by=c("CHR"="CHR")) %>%
+    left_join(df,., by=c("CHR")) %>%
 
     # Add a cumulative position of each SNP
     arrange(CHR, BP) %>%
     mutate( BPcum=as.numeric(BP+tot)) %>%
+    #mutate( is_annotate=ifelse(SNP %in% hlight, "yes", "no")) %>%
     gather(key, value, -BP,-SNP,-CHR,-BPcum,-tot)
+    df.tmp = df.tmp %>% left_join(threshtable,.,by=c("phenotype"="key"))
+    df.tmp$sig=df.tmp$value < 10^-df.tmp$threshold
 
-    # Add highlight and annotation information
-    #mutate( is_highlight=ifelse(SNP %in% hlight, "yes", "no")) #%>%
-    #mutate( is_annotate=ifelse(P < threshold, "yes", "no"))
+    df.tmp$sig_f = interaction(df.tmp$phenotype,df.tmp$sig)
+    axisdf <- df.tmp %>% group_by(CHR) %>% summarize(center=( max(BPcum) + min(BPcum) ) / 2 )
 
-  df.tmp$sig=df.tmp$value < 10^-threshold
-  # get chromosome center positions for x-axis
-  axisdf <- df.tmp %>% group_by(CHR) %>% summarize(center=( max(BPcum) + min(BPcum) ) / 2 )
-  df.tmp=df.tmp[!is.na(df.tmp$value),]
-  df.tmp=df.tmp[df.tmp$value <= quantile(df.tmp$value,0.3),]
-  rownames(df.tmp)=seq(1,nrow(df.tmp))
-  ggplot(df.tmp, aes(x=BPcum, y=-log10(value))) +
-    # Show all points
-    geom_point(aes(color=as.factor(CHR)), alpha=0.8, size=2) +
-
-    scale_color_manual(values = rep(col, 22 )) +
+    df.tmp=df.tmp[!is.na(df.tmp$value),]
+    df.tmp=df.tmp[df.tmp$value <= quantile(df.tmp$value,0.3),]
+    rownames(df.tmp)=seq(1,nrow(df.tmp))
+    threshold=min(df.tmp$threshold)
+    ggplot(df.tmp, aes(BPcum, -log10(value))) +
+    geom_point(aes(color=sig_f), alpha=0.8, size=1.5) +
+    scale_color_manual(values = col) +
+    #scale_color_discrete(breaks=c(levels(df.tmp$sig_f)[8:14]),palette = col,name="Phenotype") +
 
     # custom X axis:
     scale_x_continuous( label = axisdf$CHR, breaks= axisdf$center ) +
-    scale_y_continuous(expand = c(0, 0), limits = ylims) + # expand=c(0,0)removes space between plot area and x axis
+    scale_y_continuous(expand = c(0, 0), limits = c(0,10)) + # expand=c(0,0)removes space between plot area and x axis
 
     # add plot and axis titles
-    ggtitle(paste0(title)) +
+    #ggtitle(paste0(title)) +
     labs(x = "Chromosome") +
-
     # add genome-wide sig and sugg lines
-    geom_hline(yintercept = threshold,linetype="dashed") +
+    geom_hline(yintercept = threshold, linetype="dashed") +
     #geom_hline(yintercept = -log10(sugg), linetype="dashed") +
 
     # Add highlighted points
-    geom_point(data=subset(df.tmp, sig==T), color=pcol[["male_flowering_d6_P"]], size=2) +
+    #geom_point(data=subset(df.tmp, is_highlight=="yes"), color="orange", size=2) +
 
     # Add label using ggrepel to avoid overlapping
     #geom_label_repel(data=df.tmp[df.tmp$is_annotate=="yes",], aes(label=as.factor(SNP), alpha=0.7), size=5, force=1.3) +
@@ -92,53 +97,50 @@ gg.manhattan2 <- function(df, threshold, col, ylims,bounds){
     # Custom the theme:
     theme_classic() +
     theme(
-      text = element_text(size=20),
       plot.title = element_text(hjust = 0.5),
       #legend.position="none",
       panel.border = element_blank(),
       panel.grid.major.x = element_blank(),
       panel.grid.minor.x = element_blank()
     ) + guides(color=F)
+
 }
 
 snp_gwas=fread(sprintf('result_tables/600K_GWAS_%s_results.txt',e),data.table=F)
 snp_gwas=snp_gwas[complete.cases(snp_gwas),]
 
-snpthresh=threshtable[threshtable$method=="600K_SNP",]
+snpthresh=thresholdtable[thresholdtable$method=="600K_SNP",]
+rownames(snpthresh)=seq(1,nrow(snpthresh))
 #snpthresh=snpthresh[,c('phenotype','threshold')]
-greypalette=gray.colors(5)
+#mypalette=gray.colors(5)
 #mypalette <- c("#E2709A", "#CB4577", "#BD215B", "#970F42", "#75002B")
-threshold=snpthresh[snpthresh$phenotype==pheno,]$threshold
+#threshold=snpthresh[snpthresh$phenotype==pheno,]$threshold
 
 title=sprintf("SNP GWAS %s",e)
-df=snp_gwas[,c('SNP','CHR','BP',pheno)]
+df=snp_gwas[,c('SNP','CHR','BP',phenotypes)]
 
-a2<-gg.manhattan2(df,threshold,
-             col=greypalette,
-             ylims=c(0,16)) + labs(caption = title)
-#qtl_bounds$height=1
-#a3<-ggplot(qtl_bounds,x=alt_cum_right_bound_bp,y=height) + geom_segment(aes(x=cum_left_bound_bp,xend=alt_cum_right_bound_bp,y=height,yend=height),alpha=0.8,size=10,color=pcol[[pheno]]))
 
-phenotypes=c("male_flowering_d6","female_flowering_d6","total_plant_height","harvest_graint_moisture","grain_yield_15","tkw_15")
+a2<-gg.manhattan2(df,snpthresh,
+             col=col,
+             ylims=c(0,10)) + labs(caption = title)
 
-snp_bounds=qtl_bounds[qtl_bounds$Method=="600K_SNP" & qtl_bounds$Environment==e,]
-ft_days=c("male_flowering_days","female_flowering_days")
-snp_bounds=snp_bounds[!snp_bounds$Phenotype %in% ft_days,]
-snp_bounds$p_P=paste0(snp_bounds$Phenotype,'_P')
-snp_bounds$heights=c(12,12,12.5,13,13,13.5,14)
-for(i in 1:dim(snp_bounds)[1]){
-  rowdf=snp_bounds[i,]
-  start=rowdf$cum_left_bound_bp
-  end=rowdf$alt_cum_right_bound_bp
-  ph=rowdf$Phenotype
-  h=rowdf$heights
-  p_P=paste0(ph,'_P')
-  a2<-a2+geom_segment(data=snp_bounds,aes(x=start,xend=end,y=h,yend),alpha=0.5,size=15,color=pcol[[p_P]])
+
+
+snp_bounds=qtl_bounds[qtl_bounds$Method=="600K_SNP" & qtl_bounds$Environment==e & qtl_bounds$Phenotype==p,]
+for(p in phenotype)
+  if(dim(snp_bounds)[1]!=0){
+    row.names(snp_bounds)=seq(1,dim(snp_bounds)[1])
+    for(i in 1:dim(snp_bounds)[1]){
+      rowdf=snp_bounds[i,]
+      start=rowdf$cum_left_bound_bp
+      end=rowdf$alt_cum_right_bound_bp
+      a2<-a2+geom_ribbon(aes_string(xmin=start,xmax=end),alpha=0.2,fill=col[p])
+    }
 }
-#a2<-a2+geom_segment(aes(x=snp_bounds$cum_left_bound_bp,xend=snp_bounds$alt_cum_right_bound_bp,y=snp_bounds$heights,yend=snp_bounds$heights+0.5),alpha=0.5,size=15,color=sapply(seq(1,nrow(snp_bounds)),function(x) pcol[[snp_bounds$p_P[x]]]))
-png('test_2.png')
-print(a2)
-dev.off()
+
+#png('test.png')
+#print(a2)
+#dev.off()
 
 fp_gwas=fread(sprintf('result_tables/Founder_GWAS_%s_results.txt',e),data.table=F)
 fpthresh=threshtable[threshtable$method=="founder_probs",]
@@ -147,8 +149,8 @@ fpthresh=fpthresh[fpthresh$phenotype==pheno,]$threshold
 title=sprintf("Founder GWAS %s %s",e,p)
 df=fp_gwas[,c('SNP','CHR','BP',pheno)]
 b2<-gg.manhattan2(df,fpthresh,
-             col=mypalette,
-             ylims=c(0,15)) + labs(caption = title)
+             col=col,
+             ylims=c(0,12)) + labs(caption = title)
 
 
 fp_bounds=qtl_bounds[qtl_bounds$Method=="Founder_probs" & qtl_bounds$Environment==e & qtl_bounds$Phenotype==p,]
@@ -173,9 +175,10 @@ df=hp_gwas[,c('SNP','CHR','BP',pheno)]
 
 
 c2<-gg.manhattan2(df,hpthresh,
-             col=mypalette,
-             ylims=c(0,15))+ labs(caption = title)
+             col=col,
+             ylims=c(0,12))+ labs(caption = title)
 
+for
 hp_bounds=qtl_bounds[qtl_bounds$Method=="Haplotype_probs" & qtl_bounds$Environment==e & qtl_bounds$Phenotype==p,]
 if(dim(hp_bounds)[1]!=0){
   row.names(hp_bounds)=seq(1,dim(hp_bounds)[1])
@@ -199,6 +202,6 @@ prow <- plot_grid(
 )
 
 
-png(sprintf('result_tables/Methods_thresh%.2f_Fig3_%s_x_%s.png',thresh,e,p),width=2000,height=1500)
+png(sprintf('result_tables/Methods_thresh%.2f_Fig3_%s_x_%s_allphenos.png',thresh,e),width=2000,height=1500)
 print(plot_grid(prow))
 dev.off()

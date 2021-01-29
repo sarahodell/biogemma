@@ -1,10 +1,10 @@
 #!/bin/bash -l
 #SBATCH -D /home/sodell/projects/biogemma/GridLMM/GridLMM_600KSNP
 #SBATCH -J glm_snp
-#SBATCH -o /home/sodell/projects/biogemma/slurm-logs/out-%j.txt
-#SBATCH -e /home/sodell/projects/biogemma/slurm-logs/error-%j.txt
+#SBATCH -o /home/sodell/projects/biogemma/slurm-logs/%A_%a.out
+#SBATCH -e /home/sodell/projects/biogemma/slurm-logs/%A_%a.error
 #SBATCH -t 48:00:00
-#SBATCH --array=1-500%100
+#SBATCH --array=1-70
 #SBATCH --ntasks=4
 #SBATCH --mem=4G
 

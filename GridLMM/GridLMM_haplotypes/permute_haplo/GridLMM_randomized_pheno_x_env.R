@@ -26,7 +26,7 @@ colnames(K)=rownames(K)
 
 # Read in phenotypes
 # Grab the phenotype of interest and drop the genotypes not in the K matrix
-phenotypes=fread('../../phenotypes.csv',data.table=F)
+phenotypes=fread('../../phenotypes_asi.csv',data.table=F)
 phenotypes=phenotypes[,c('Genotype_code','Loc.Year.Treat',pheno)]
 phenotypes$Genotype_code=gsub('-','.',phenotypes$Genotype_code)
 phenotypes=phenotypes[phenotypes$Genotype_code %in% rownames(K),]

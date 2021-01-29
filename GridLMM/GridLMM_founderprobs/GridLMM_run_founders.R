@@ -58,7 +58,7 @@ V_setup=null_model$setup
 
 Y=as.matrix(data_blup$y)
 X_cov=null_model$lmod$X
-X_list_ordered=lapply(X_list,function(x) x[data_blup$ID,])
+X_list_ordered=lapply(X_list,function(x) x[data_blup$ID,,drop=F])
 X_list_null=NULL
 
 gwas=run_GridLMM_GWAS(Y,X_cov,X_list_ordered[-1],X_list_null,V_setup=V_setup,h2_start=h2_start,method='ML',mc.cores=cores,verbose=F)

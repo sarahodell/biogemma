@@ -6,10 +6,10 @@ args=commandArgs(trailingOnly=T)
 env=as.character(args[[1]])
 f_envs=c("BLOIS_2014_OPT","GRANEROS_2015_OPT","NERAC_2016_WD","ALL")
 if(env %in% f_envs){
-  phenotypes=c("male_flowering_d6","male_flowering_days","female_flowering_d6","female_flowering_days","total_plant_height","grain_yield_15","tkw_15","harvest_grain_moisture")
+  phenotypes=c("male_flowering_d6","male_flowering_days","female_flowering_d6","female_flowering_days","total_plant_height","grain_yield_15","tkw_15","harvest_grain_moisture","asi")
 
 }else{
-  phenotypes=c("male_flowering_d6","female_flowering_d6","total_plant_height","grain_yield_15","tkw_15","harvest_grain_moisture")
+  phenotypes=c("male_flowering_d6","female_flowering_d6","total_plant_height","grain_yield_15","tkw_15","harvest_grain_moisture","asi")
 }
 #base=c(10,9,9,10,7,10,6,9,9,10)
 base=c(8,7,7,8,6,7,7,8,7,7)
