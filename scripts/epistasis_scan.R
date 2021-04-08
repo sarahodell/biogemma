@@ -2,6 +2,7 @@
 
 args=commandArgs(trailingOnly=T)
 chr=as.character(args[[1]])
+env=as.character(args[[2]])
 
 library('GridLMM')
 library('data.table')
@@ -18,8 +19,8 @@ mite=c(T,F,T,T,F,T,T,T,T,T,T,F,T,T,T,F)
 has_mite=which(mite==T,mite)
 no_mite=which(mite==F,mite)
 
-plotdf_all=c()
-tests=0
+#plotdf_all=c()
+#tests=0
 #for(c in 1:10){
 #  print(c)
 #  chr=as.character(c)
@@ -36,21 +37,33 @@ inds=geno$ind
   # Read in phenotype BLUP data for flowering time
 phenotype=fread('GridLMM/phenotypes_asi.csv',data.table=F)
 phenotype$Genotype_code = gsub('-','.',phenotype$Genotype_code,fixed=T)
-m1=lmer(male_flowering_d6~Loc.Year.Treat + (1|Genotype_code),phenotype)
-data_blup = as.data.frame(ranef(m1)$Genotype_code)
-data_blup$ID = rownames(data_blup)
-data_blup$y=data_blup$`(Intercept)`
-data_blup=data_blup[,c('ID','y')]
-geno = geno[rownames(geno) %in% data_blup$ID,]
-inds=inds[inds %in% data_blup$ID]
-mat=match(inds,data_blup$ID)
-df=data.frame(ind=inds,y=data_blup[mat,]$y,stringsAsFactors=F)
+phenotype=phenotype[,c('Loc.Year.Treat','Genotype_code','male_flowering_d6'),]
+names(phenotype)=c('env','ID','y')
+if(env=="ALL"){
+  m1=lmer(y~env + (1|ID),phenotype)
+  data_blup = as.data.frame(ranef(m1)$ID)
+  data_blup$ID = rownames(data_blup)
+  data_blup$y=data_blup$`(Intercept)`
+  data_blup=data_blup[,c('ID','y')]
+  geno = geno[rownames(geno) %in% data_blup$ID,]
+  inds=inds[inds %in% data_blup$ID]
+  mat=match(inds,data_blup$ID)
+  df=data.frame(ID=inds,y=data_blup[mat,]$y,stringsAsFactors=F)
+}else{
+  phenotype=phenotype[phenotype$env == env,]
+  geno = geno[rownames(geno) %in% phenotype$ID,]
+  inds=inds[inds %in% phenotype$ID]
+  mat=match(inds,phenotype$ID)
+  df=data.frame(ID=inds,y=phenotype[mat,]$y,stringsAsFactors=F)
+  df$y = df$y - mean(df$y)
+}
+
 
 mite=fread('GridLMM/mite_probabilities.txt',data.table=F)
-mite=mite[mite$ID %in% data_blup$ID,]
+mite=mite[mite$ID %in% df$ID,]
 rownames(mite)=seq(1,nrow(mite))
-mite$clean_m=ifelse(mite$`AX-91102970`>=0.9,1,0)
-mite_marker=names(mite)[2]
+mite$clean_m=ifelse(mite$final>=0.9,1,0)
+mite_marker="AX-91102970"
 
 markers=names(geno)[-1]
   #markers=markers[-41456]
@@ -66,8 +79,8 @@ count=0
 for(m in markers){
   subgeno=geno[,c('ind',m)]
   subdf=df
-  subdf$marker=geno[match(subdf$ind,geno$ind),m]
-  subdf$mite=mite[match(subdf$ind,mite$ID),'clean_m']
+  subdf$marker=geno[match(subdf$ID,geno$ind),m]
+  subdf$mite=mite[match(subdf$ID,mite$ID),'clean_m']
   names(subdf)=c('ind','y','test_marker','mite')
   subdf$test=paste0(subdf$test_marker,'_',subdf$mite)
   if(length(unique(subdf$test)) == 4){
@@ -94,7 +107,7 @@ plotdf$chrom==as.numeric(chr)
 
 #cutoff=-log10(0.05/tests)
 
-fwrite(plotdf,sprintf('GridLMM/MITE_only/chr%s_vgt1_epistasis_scan.txt',chr),quote=F,sep='\t',row.names=F)
+fwrite(plotdf,sprintf('GridLMM/MITE_only/chr%s_%s_vgt1_epistasis_scan.txt',chr,env),quote=F,sep='\t',row.names=F)
 
 #png('GridLMM/MITE_only/vgt1_epistasis_scan.png',width=1000,height=800)
 #print(ggplot(plotdf,aes(x=pos/1e6,y=log10p)) + geom_point() + geom_hline(yintercept=cutoff) + facet_grid(.~chrom))

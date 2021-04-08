@@ -9,21 +9,235 @@ founders=c("B73_inra","A632_usa","CO255_inra","FV252_inra","OH43_inra",
            "W117_inra","B96","DK63","F492","ND245","VA85")
 qtl=fread('GridLMM/Biogemma_QTL.csv',data.table=F)
 qtl_overlap=fread('GridLMM/Biogemma_Method_Overlap.csv',data.table=F)
-qtl_overlap$pxe=paste0(qtl_overlap$Phenotype,'_',qtl_overlap$Environment)
+#qtl_overlap$pxe=paste0(qtl_overlap$Phenotype,'_',qtl_overlap$Environment)
 
-#f_ses=readRDS('GridLMM/effect_sizes/Founder_prob_QTL_SEs.rds')
+f_ses=readRDS('GridLMM/effect_sizes/Founder_prob_QTL_SEs.rds')
 h_ses=readRDS('GridLMM/effect_sizes/Haplotype_prob_QTL_SEs.rds')
-#s_ses=readRDS('GridLMM/effect_sizes/600K_SNP_QTL_SEs.rds')
+s_ses=readRDS('GridLMM/effect_sizes/600K_SNP_QTL_SEs.rds')
 
-#s_notf_ses=readRDS('GridLMM/effect_sizes/SNP_notFounder_prob_QTL_SEs.rds')
-h_notf_ses=readRDS('GridLMM/effect_sizes/Haplotype_notFounder_prob_QTL_SEs.rds')
-#f_nots_ses=readRDS('GridLMM/effect_sizes/Founder_notSNP_prob_QTL_SEs.rds')
-
-f_nots=fread('GridLMM/effect_sizes/Founder_notSNP_highest_peaks.txt',data.table=F)
+s_notf_ses=readRDS('GridLMM/effect_sizes/SNP_notFounder_prob_QTL_SEs.rds')
 s_notf=fread('GridLMM/effect_sizes/SNP_notFounder_highest_peaks.txt',data.table=F)
 
-f_noth=fread('GridLMM/effect_sizes/Founder_notHaplotype_highest_peaks.txt',data.table=F)
+#s_noth
+#s_noth_ses
+
+h_notf_ses=readRDS('GridLMM/effect_sizes/Haplotype_notFounder_prob_QTL_SEs.rds')
 h_notf=fread('GridLMM/effect_sizes/Haplotype_notFounder_highest_peaks.txt',data.table=F)
+
+#h_nots
+#h_nots_ses
+
+f_nots_ses=readRDS('GridLMM/effect_sizes/Founder_notSNP_prob_QTL_SEs.rds')
+f_nots=fread('GridLMM/effect_sizes/Founder_notSNP_highest_peaks.txt',data.table=F)
+
+f_noth=fread('GridLMM/effect_sizes/Founder_notHaplotype_highest_peaks.txt',data.table=F)
+#f_noth_ses
+
+
+
+s_f_h_ids=qtl_overlap[qtl_overlap$label=="S_F_H",]$pheno_env_id
+s_only_ids=qtl_overlap[qtl_overlap$label=="S_only",]$pheno_env_id
+f_only_ids=qtl_overlap[qtl_overlap$label=="F_only",]$pheno_env_id
+h_only_ids=qtl_overlap[qtl_overlap$label=="H_only",]$pheno_env_id
+s_and_f_ids=qtl_overlap[qtl_overlap$label=="S_and_F",]$pheno_env_id
+f_and_h_ids=qtl_overlap[qtl_overlap$label=="F_and_H",]$pheno_env_id
+
+#S_F_H
+for(q in s_f_h_ids){
+  s_f_h_plots=list()
+  acount=0
+  for(n in seq(1,l)){
+    #print(n)
+    data=as.data.frame(s_f_h_data[[n]]$values,stringsAsFactors=F)
+    chr=s_f_h_data[[n]]$chrom
+    na=which(is.na(data$f_value))
+    if(length(na)!=0){
+      data[na,]$f_value=0
+      data[na,]$f_se=NA
+    }
+    name=s_f_h_data[[n]]$id
+    colorcodes=fread('GridLMM/effect_sizes/founder_color_codes.txt',data.table=F)
+    rownames(colorcodes)=colorcodes$founder
+    colorcodes=colorcodes[data$founder,]
+    leg<-ggplot(data,aes(x=variable_f,y=f_value,fill=variable_f)) +
+     geom_bar(stat="identity") +
+     scale_fill_manual(values=colorcodes[levels(data$variable_f),]$hex_color,labels=levels(data$variable_f)) +
+     guides(fill=guide_legend(title="Founder")) +
+      theme(legend.title=element_text(size=10))
+
+
+    legend <- get_legend(
+       leg + theme(legend.box.margin = margin(0, 0, 0, 20))
+    )
+
+    a<-ggplot(data,aes(x=variable_f,y=f_value,color=variable_f)) +
+     geom_point() +
+     scale_color_manual(values=colorcodes[levels(data$variable_f),]$hex_color,labels=levels(data$variable_f))+
+     geom_errorbar(aes(ymin=f_value-(2*f_se),ymax=f_value+(2*f_se)),width=.2,position=position_dodge()) +
+     geom_text(aes(label=allele),vjust=-0.3,hjust=-0.3,color="black",size=3.5) +
+     ylab("Effect Size") + xlab("Founder") +
+     ggtitle(sprintf('Effect Sizes of %s',name)) +
+     theme(axis.text.x=element_text(size=6),axis.text.y=element_text(size=6),
+     axis.title.y=element_text(size=8),axis.title.x=element_text(size=8)) +
+      guides(color=F)
+
+    sdata = data %>% group_by(allele) %>% summarize(s_value=mean(s_value),s_se=mean(s_se))
+
+    b<-ggplot(sdata,aes(x=factor(allele,levels=c(0,1)),y=s_value)) +
+    geom_point() + geom_errorbar(aes(ymin=s_value-(2*s_se),ymax=s_value+(2*s_se))) +
+    ylab("SNP Effect Size") +
+    xlab("Allele") +
+    #ggtitle(sprintf('SNP Effect Sizes of %s',name)) +
+    theme(axis.text.x=element_text(size=6),axis.text.y=element_text(size=6),
+    axis.title.x=element_text(size=8),axis.title.y=element_text(size=8))
+
+    hdata = data %>% group_by(hapgrp) %>% summarize(h_value=mean(h_value),h_se=mean(h_se))
+    hdata$variable_h=factor(paste0("HAPGRP_",hdata$hapgrp),levels=paste0("HAPGRP_",hdata$hapgrp))
+    c<-ggplot(hdata,aes(x=variable_h,y=h_value)) + geom_point() +
+    geom_errorbar(aes(ymin=h_value-(2*h_se),ymax=h_value+(2*h_se))) +
+    ylab("Haplotype Effect Size") +
+    xlab("Haplotype Groups") +
+    theme(axis.text.x=element_text(size=6),
+    axis.text.y=element_text(size=6),
+    axis.title.y=element_text(size=8),
+    axis.title.x=element_text(size=8))
+
+    c2=list()
+    count=1
+    h=max(data$hapgrp)
+    for(i in seq(1,h)){
+      sub=data[data$hapgrp==i,]
+      c2[[count]]<- ggplot(sub,aes(x="",y=h_perc,fill=variable_f))+
+       geom_bar(stat="identity",width=1) +
+       coord_polar("y",start=0) +
+       scale_fill_manual(values=colorcodes[sub$variable_f,]$hex_color,labels=levels(sub$variable_f)) +
+       guides(fill=F) +
+       labs(caption=paste0("HAPGRP_",i)) +
+       theme(axis.title.x=element_blank(),
+       axis.text.y=element_blank(),axis.title.y=element_blank(),
+       axis.ticks.y=element_blank(),axis.ticks.x=element_blank(),
+       axis.text.x=element_blank(),plot.caption=element_text(size=6))
+
+       count=count+1
+    }
+
+    pies=plot_grid(plotlist=c2,nrow=1)
+
+    p1=plot_grid(pies,c,ncol=1,rel_heights=c(3,12))
+    p2=plot_grid(b,p1,nrow=1,rel_widths=c(3,h))
+    p3=plot_grid(a,p2,nrow=2,rel_heights=c(8,8))
+    #p3=plot_grid(p2,legend,ncol=2,rel_widths = c(4,.4))
+    p4=plot_grid(p3,legend,ncol=2,rel_widths=c(4,.4))#+ labs(title=sprintf("Effect Sizes of %s by Method",name))
+
+    acount=acount+1
+    s_f_h_plots[[acount]]=p4
+  }
+
+  pdf('GridLMM/effect_sizes/S_F_H_QTL_Effect_Sizes.pdf',onefile=TRUE)
+  for(i in 1:length(s_f_h_plots)){
+    print(s_f_h_plots[[i]])
+  }
+  dev.off()
+}
+
+#S_and_F
+for(q in s_and_f_ids){
+  s_and_f_plots=list()
+  acount=0
+  for(n in seq(1,l)){
+    #print(n)
+    data=as.data.frame(s_f_h_data[[n]]$values,stringsAsFactors=F)
+    chr=s_f_h_data[[n]]$chrom
+    na=which(is.na(data$f_value))
+    if(length(na)!=0){
+      data[na,]$f_value=0
+      data[na,]$f_se=NA
+    }
+    name=s_f_h_data[[n]]$id
+    colorcodes=fread('GridLMM/effect_sizes/founder_color_codes.txt',data.table=F)
+    rownames(colorcodes)=colorcodes$founder
+    colorcodes=colorcodes[data$founder,]
+    leg<-ggplot(data,aes(x=variable_f,y=f_value,fill=variable_f)) +
+     geom_bar(stat="identity") +
+     scale_fill_manual(values=colorcodes[levels(data$variable_f),]$hex_color,labels=levels(data$variable_f)) +
+     guides(fill=guide_legend(title="Founder")) +
+      theme(legend.title=element_text(size=10))
+
+
+    legend <- get_legend(
+       leg + theme(legend.box.margin = margin(0, 0, 0, 20))
+    )
+
+    a<-ggplot(data,aes(x=variable_f,y=f_value,color=variable_f)) +
+     geom_point() +
+     scale_color_manual(values=colorcodes[levels(data$variable_f),]$hex_color,labels=levels(data$variable_f))+
+     geom_errorbar(aes(ymin=f_value-(2*f_se),ymax=f_value+(2*f_se)),width=.2,position=position_dodge()) +
+     geom_text(aes(label=allele),vjust=-0.3,hjust=-0.3,color="black",size=3.5) +
+     ylab("Effect Size") + xlab("Founder") +
+     ggtitle(sprintf('Effect Sizes of %s',name)) +
+     theme(axis.text.x=element_text(size=6),axis.text.y=element_text(size=6),
+     axis.title.y=element_text(size=8),axis.title.x=element_text(size=8)) +
+      guides(color=F)
+
+    sdata = data %>% group_by(allele) %>% summarize(s_value=mean(s_value),s_se=mean(s_se))
+
+    b<-ggplot(sdata,aes(x=factor(allele,levels=c(0,1)),y=s_value)) +
+    geom_point() + geom_errorbar(aes(ymin=s_value-(2*s_se),ymax=s_value+(2*s_se))) +
+    ylab("SNP Effect Size") +
+    xlab("Allele") +
+    #ggtitle(sprintf('SNP Effect Sizes of %s',name)) +
+    theme(axis.text.x=element_text(size=6),axis.text.y=element_text(size=6),
+    axis.title.x=element_text(size=8),axis.title.y=element_text(size=8))
+
+    hdata = data %>% group_by(hapgrp) %>% summarize(h_value=mean(h_value),h_se=mean(h_se))
+    hdata$variable_h=factor(paste0("HAPGRP_",hdata$hapgrp),levels=paste0("HAPGRP_",hdata$hapgrp))
+    c<-ggplot(hdata,aes(x=variable_h,y=h_value)) + geom_point() +
+    geom_errorbar(aes(ymin=h_value-(2*h_se),ymax=h_value+(2*h_se))) +
+    ylab("Haplotype Effect Size") +
+    xlab("Haplotype Groups") +
+    theme(axis.text.x=element_text(size=6),
+    axis.text.y=element_text(size=6),
+    axis.title.y=element_text(size=8),
+    axis.title.x=element_text(size=8))
+
+    c2=list()
+    count=1
+    h=max(data$hapgrp)
+    for(i in seq(1,h)){
+      sub=data[data$hapgrp==i,]
+      c2[[count]]<- ggplot(sub,aes(x="",y=h_perc,fill=variable_f))+
+       geom_bar(stat="identity",width=1) +
+       coord_polar("y",start=0) +
+       scale_fill_manual(values=colorcodes[sub$variable_f,]$hex_color,labels=levels(sub$variable_f)) +
+       guides(fill=F) +
+       labs(caption=paste0("HAPGRP_",i)) +
+       theme(axis.title.x=element_blank(),
+       axis.text.y=element_blank(),axis.title.y=element_blank(),
+       axis.ticks.y=element_blank(),axis.ticks.x=element_blank(),
+       axis.text.x=element_blank(),plot.caption=element_text(size=6))
+
+       count=count+1
+    }
+
+    pies=plot_grid(plotlist=c2,nrow=1)
+
+    p1=plot_grid(pies,c,ncol=1,rel_heights=c(3,12))
+    p2=plot_grid(b,p1,nrow=1,rel_widths=c(3,h))
+    p3=plot_grid(a,p2,nrow=2,rel_heights=c(8,8))
+    #p3=plot_grid(p2,legend,ncol=2,rel_widths = c(4,.4))
+    p4=plot_grid(p3,legend,ncol=2,rel_widths=c(4,.4))#+ labs(title=sprintf("Effect Sizes of %s by Method",name))
+
+    acount=acount+1
+    s_f_h_plots[[acount]]=p4
+  }
+
+  pdf('GridLMM/effect_sizes/S_only_QTL_Effect_Sizes.pdf',onefile=TRUE)
+  for(i in 1:length(s_f_h_plots)){
+    print(s_f_h_plots[[i]])
+  }
+  dev.off()
+}
+
 # Founder vs. Haplotype for shared QTL
 ft_days=c("female_flowering_days","male_flowering_days")
 qtl_overlap=qtl_overlap[!(qtl_overlap$Phenotype %in% ft_days),]

@@ -7,10 +7,10 @@ library('qtlcharts')
 
 args=commandArgs(trailingOnly=TRUE)
 c=as.character(args[1])
-cores=as.character(args[[2]])
+cores=as.numeric(args[[2]])
 
 control_file=sprintf('genotypes/qtl2/startfiles/Biogemma_c%s.json',c)
-outfile=sprintf("genotypes/probabilities/geno_probs/raw/bg%s_genoprobs_010319.rds",c)
+outfile=sprintf("genotypes/probabilities/geno_probs/raw/bg%s_genoprobs.rds",c)
 
 bg<-read_cross2(control_file)
 bg<-drop_nullmarkers(bg)

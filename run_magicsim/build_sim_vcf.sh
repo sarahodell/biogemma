@@ -1,0 +1,59 @@
+#!/bin/bash -l
+#SBATCH -D /home/sodell/projects/biogemma/run_magicsim
+#SBATCH -J magicsim
+#SBATCH -o /home/sodell/projects/biogemma/slurm-logs/%A_%a.out
+#SBATCH -e /home/sodell/projects/biogemma/slurm-logs/%A_%a.error
+#SBATCH -t 24:00:00
+#SBATCH --array=1-100
+#SBATCH --mem 7G
+#SBATCH --ntasks 1
+
+#Creates a merged vcf files of 400 Simulated MAGIC lines
+
+module load bcftools
+module load tabix
+module load vcftools
+module load R
+module load python/2.7.14
+#
+#rep=1
+rep=$SLURM_ARRAY_TASK_ID
+#founder_path=../../genotypes/600K/individual_founders
+#Rscript SimulateMAGIC.R $rep
+
+if [ ! -d /scratch/sodell ]; then
+  mkdir /scratch/sodell;
+fi
+
+if [ ! -d /scratch/sodell/rep${rep}_tmp ];then
+  mkdir /scratch/sodell/rep${rep}_tmp;
+fi
+
+module load conda3
+source activate pandas-env
+cd /scratch/sodell/rep${rep}_tmp
+founder_path=/scratch/sodell/individual_founders
+build_simvcf=/home/sodell/projects/biogemma/run_magicsim/build_simvcf.py
+break_path=/home/sodell/projects/biogemma/run_magicsim/breaktables/MAGIC_DH_Sim_rep${rep}_breaktable.txt
+out_path=MAGIC_DHSim_rep${rep}.vcf
+
+echo "Building single line vcfs"
+
+python $build_simvcf $break_path $out_path $founder_path --all True
+cd /home/sodell/projects/biogemma/run_magicsim
+#i=1
+conda deactivate pandas-env
+echo "Ordering and indexing vcfs"
+for i in {1..400}; do
+    echo Sim${i} > /scratch/sodell/rep${rep}_tmp/Sim${i}.txt
+    cat /scratch/sodell/rep${rep}_tmp/Sim${i}_MAGIC_DHSim_rep${rep}.vcf | vcf-sort | bcftools reheader -s /scratch/sodell/rep${rep}_tmp/Sim${i}.txt -o /scratch/sodell/rep${rep}_tmp/Sim${i}_MAGIC_DHSim_rep${rep}_edit.vcf
+    bgzip /scratch/sodell/rep${rep}_tmp/Sim${i}_MAGIC_DHSim_rep${rep}_edit.vcf
+    tabix -p vcf /scratch/sodell/rep${rep}_tmp/Sim${i}_MAGIC_DHSim_rep${rep}_edit.vcf.gz
+    echo /scratch/sodell/rep${rep}_tmp/Sim${i}_MAGIC_DHSim_rep${rep}_edit.vcf.gz >> /scratch/sodell/rep${rep}_tmp/line_names.txt
+done
+echo "Merging vcfs"
+bcftools merge -l /scratch/sodell/rep${rep}_tmp/line_names.txt -m all -Oz > merged_vcfs/MAGIC_DHSimAll_rep${rep}.vcf.gz
+
+#rm *regions.txt
+rm -r /scratch/sodell/rep${rep}_tmp
+#rm line_names.txt

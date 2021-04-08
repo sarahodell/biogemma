@@ -38,50 +38,24 @@ data$y = data$y - mean(data$y)
 # Filter genotypes that are not in the K matrix
 X_list=readRDS(sprintf('../../genotypes/probabilities/geno_probs/bg%s_filtered_genotype_probs.rds',chr))
 
-founders=c("A632_usa","B73_inra","CO255_inra","FV252_inra","OH43_inra", "A654_inra","FV2_inra","C103_inra","EP1_inra","D105_inra","W117_inra","B96","DK63","F492","ND245","VA85")
+founders=c("B73_inra","A632_usa","CO255_inra","FV252_inra","OH43_inra", "A654_inra","FV2_inra","C103_inra","EP1_inra","D105_inra","W117_inra","B96","DK63","F492","ND245","VA85")
 
-new_founders=c("B73_inra","A632_usa","CO255_inra","FV252_inra","OH43_inra", "A654_inra","FV2_inra","C103_inra","EP1_inra","D105_inra","W117_inra","B96","DK63","F492","ND245","VA85")
+#new_founders=c("B73_inra","A632_usa","CO255_inra","FV252_inra","OH43_inra", "A654_inra","FV2_inra","C103_inra","EP1_inra","D105_inra","W117_inra","B96","DK63","F492","ND245","VA85")
 
 mite_prob=fread('../mite_probabilities.txt',data.table=F)
 rownames(mite_prob)=mite_prob$ID
 mite_prob=mite_prob[data$ID,]
-rownames(mite_prob)=seq(1,dim(mite_prob)[1])
+#rownames(mite_prob)=seq(1,dim(mite_prob)[1])
 #Make B73 the first in the list so that it is the one that is dropped
-names(X_list)=founders
-X_list=X_list[new_founders]
+#names(X_list)=founders
+#X_list=X_list[new_founders]
 
 X_list_order_1=lapply(X_list,function(x) x[data$ID,])
-has_mite=mite_prob[mite_prob$`AX-91102970`>=0.9,]$ID
+has_mite=mite_prob[mite_prob$final>=0.9,]$ID
+#data=data[data$ID %in% has_mite,]
 X_list_ordered=lapply(X_list_order_1,function(x) x[has_mite,])
 
-
-size=dim(X_list_ordered[[1]])[2]
-#Remove sites with low founder representation
-# drop sites with summed founder prob of less than 1
-f_sums=lapply(X_list_ordered,function(x) colSums(x))
-low_rep=lapply(f_sums,function(x) which(x<1,arr.ind=T))
-#low_rep=as.data.frame(low_rep,stringsAsFactors=F)
-#which_f=unique(low_rep$row)
-
-dropped=vector("list",length=16)
-for(f in 1:16){
-  cols=names(low_rep[[f]])
-  #geno[[1]][,f,cols]=NA
-  dropped[[f]]=cols
-}
-
-f_sums2=lapply(X_list_ordered,function(x) colSums(x>=0.8))
-low_rep2=lapply(f_sums2,function(x) which(x<5,arr.ind=T))
-#ow_rep2=as.data.frame(low_rep2,stringsAsFactors=F)
-#which_f2=unique(low_rep2$row)
-for(f in 1:16){
-  cols=names(low_rep2[[f]])
-  #geno[[1]][,f,cols]=NA
-  dropped[[f]]=unique(c(dropped[[f]],cols))
-}
-
-saveRDS(dropped,sprintf('../../genotypes/probabilities/geno_probs/dropped/bg%s_low_rep_markers_MITE_only.rds',chr))
-
+K=K[rownames(K) %in% has_mite,colnames(K) %in% has_mite]
 
 data=data[data$ID %in% has_mite,]
 Y=as.matrix(data$y)

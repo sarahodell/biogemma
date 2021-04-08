@@ -39,16 +39,21 @@ data_blup=data_blup[,c('ID','y')]
 # Read in the haplotype group probabilities
 # Filter genotypes that are not in the K matrix
 X_list=readRDS(sprintf('../../genotypes/probabilities/geno_probs/bg%s_filtered_genotype_probs.rds',chr))
+inds=rownames(X_list[[1]])
+i=intersect(data_blup$ID,inds)
 
-founders=c("A632_usa","B73_inra","CO255_inra","FV252_inra","OH43_inra", "A654_inra","FV2_inra","C103_inra","EP1_inra","D105_inra","W117_inra","B96","DK63","F492","ND245","VA85")
+#founders=c("A632_usa","B73_inra","CO255_inra","FV252_inra","OH43_inra", "A654_inra","FV2_inra","C103_inra","EP1_inra","D105_inra","W117_inra","B96","DK63","F492","ND245","VA85")
 
-new_founders=c("B73_inra","A632_usa","CO255_inra","FV252_inra","OH43_inra", "A654_inra","FV2_inra","C103_inra","EP1_inra","D105_inra","W117_inra","B96","DK63","F492","ND245","VA85")
+founders=c("B73_inra","A632_usa","CO255_inra","FV252_inra","OH43_inra", "A654_inra","FV2_inra","C103_inra","EP1_inra","D105_inra","W117_inra","B96","DK63","F492","ND245","VA85")
 
 #Make B73 the first in the list so that it is the one that is dropped
-names(X_list)=founders
-X_list=X_list[new_founders]
+#names(X_list)=founders
+#X_list=X_list[new_founders]
 
 # Run GridLMM
+data_blup=data_blup[data_blup$ID==i,]
+K=K[i,i]
+
 null_model = GridLMM_ML(y~1 + (1|ID),data_blup,relmat=list(ID=K),ML=T,REML=F,verbose=F)
 
 h2_start=null_model$results[,grepl('.ML',colnames(null_model$results),fixed=T),drop=FALSE]
@@ -58,11 +63,13 @@ V_setup=null_model$setup
 
 Y=as.matrix(data_blup$y)
 X_cov=null_model$lmod$X
-X_list_ordered=lapply(X_list,function(x) x[data_blup$ID,,drop=F])
+#X_cov is n x 0 matrix and can use full X_list_ordered
+X_list_ordered=lapply(X_list,function(x) x[i,,drop=F])
 X_list_null=NULL
+#X_list_null
+gwas=(Y,X_cov,X_list_ordered[-1],X_list_null,V_setup=V_setup,h2_start=h2_start,method='ML',mc.cores=cores,verbose=F)
 
-gwas=run_GridLMM_GWAS(Y,X_cov,X_list_ordered[-1],X_list_null,V_setup=V_setup,h2_start=h2_start,method='ML',mc.cores=cores,verbose=F)
-
+#Add intercept to beta estimates
 saveRDS(gwas,sprintf('models/Biogemma_chr%s_%s_x_ALL_founderprobs.rds',chr,pheno))
 
 # Convert all very high and very low probabilities to 1 and 0, respectively
@@ -85,3 +92,7 @@ saveRDS(gwas,sprintf('models/Biogemma_chr%s_%s_x_ALL_founderprobs.rds',chr,pheno
 #}
 
 #saveRDS(gwas_adjusted,sprintf('models/Biogemma_chr%s_%s_x_ALL_founderprobs_adjusted.rds',chr,pheno))
+
+#h2=gwas$setup$h2_start
+hinfo=data.frame(method="Founder_probs",phenotype=pheno,environment="ALL",chr=chr,h2=h2_start,hap=NA,stringsAsFactors=F)
+fwrite(hinfo,'../heritabilities.txt',quote=F,sep='\t',row.names=F,append=T)

@@ -8,8 +8,12 @@ library('data.table')
 
 #r2 cutoff of 0.95
 cutoff=0.95
-
-geno=readRDS(sprintf('genotypes/probabilities/geno_probs/raw/bg%s_genoprobs_010319.rds',chr))
+founders=c("B73_inra","A632_usa","CO255_inra","FV252_inra",
+           "OH43_inra","A654_inra","FV2_inra","C103_inra",
+           "EP1_inra","D105_inra","W117_inra","B96","DK63",
+           "F492","ND245","VA85")
+geno=readRDS(sprintf('genotypes/probabilities/geno_probs/raw/bg%s_genoprobs.rds',chr))
+dimnames(geno[[1]])[[2]]=founders
 pmap=fread(sprintf('genotypes/qtl2/startfiles/Biogemma_pmap_c%s.csv',chr),data.table=F)
 pmap=pmap[order(pmap$pos),]
 rownames(pmap)=seq(1,dim(pmap)[1])
@@ -92,7 +96,7 @@ for(i in 1:size){
 
 filtered_geno=list()
 for(i in 1:16){filtered_geno[[i]]=geno[[1]][,i,keep]}
-
+names(filtered_geno)=founders
 
 saveRDS(dropped,sprintf('genotypes/probabilities/geno_probs/dropped/bg%s_dropped_markers_genoprobs.rds',chr))
 saveRDS(filtered_geno,sprintf('genotypes/probabilities/geno_probs/bg%s_filtered_genotype_probs.rds',chr))

@@ -11,7 +11,7 @@ library("tibble")
 library('igraph')
 library('abind')
 
-founders=c("A632_usa","B73_inra","CO255_inra","FV252_inra","OH43_inra", "A654_inra","FV2_inra","C103_inra","EP1_inra","D105_inra","W117_inra","B96","DK63","F492","ND245","VA85")
+founders=c("B73_inra","A632_usa","CO255_inra","FV252_inra","OH43_inra", "A654_inra","FV2_inra","C103_inra","EP1_inra","D105_inra","W117_inra","B96","DK63","F492","ND245","VA85")
 pmapfile=sprintf("genotypes/qtl2/startfiles/Biogemma_pmap_c%s.csv",c)
 ibd=fread(sprintf('ibd_segments/refinedibd/600K/Biogemma_600K_Founders_RefinedIBD_chr%s.ibd',c),data.table = F)
 
@@ -23,13 +23,13 @@ rownames(ibd)=seq(1,dim(ibd)[1])
 print("Finished formating IBD file")
 
 pmap=fread(pmapfile,data.table=F)
-hap_founders=c("B73_inra","A632_usa","CO255_inra","FV252_inra","OH43_inra","A654_inra","FV2_inra","C103_inra","EP1_inra","D105_inra","W117_inra","B96","DK63","F492","ND245","VA85")
+#hap_founders=c("B73_inra","A632_usa","CO255_inra","FV252_inra","OH43_inra","A654_inra","FV2_inra","C103_inra","EP1_inra","D105_inra","W117_inra","B96","DK63","F492","ND245","VA85")
 
 ibd_segments=c()
 start=min(ibd$left_pos) #start with first segment in chromosome
 ibd_graph=array(0,dim=c(16,16,1))
 ibd_graph[,,1]=diag(16)
-dimnames(ibd_graph)=list(hap_founders,hap_founders,"blank")
+dimnames(ibd_graph)=list(founders,founders,"blank")
 if(start>min(pmap$pos)){
   ibd_segments=rbind(ibd_segments,c(c,min(pmap$pos),start,seq(1,16),16))
 }
@@ -63,7 +63,7 @@ while(start<max(ibd$right_pos)){
     rownames(within)=seq(1,dim(within)[1])
     #adj=matrix(0,nrow=16,ncol=16,dimnames=list(founders,founders))
     adj=diag(16)
-    dimnames(adj)=list(hap_founders,hap_founders)
+    dimnames(adj)=list(founders,founders)
     for (i in 1:nrow(within)){
       adj[c(within[i,'ID_1']),c(within[i,'ID_2'])]=1
       adj[c(within[i,'ID_2']),c(within[i,'ID_1'])]=1
@@ -75,7 +75,7 @@ while(start<max(ibd$right_pos)){
   }
   else{
     adj=diag(16)
-    dimnames(adj)=list(hap_founders,hap_founders)
+    dimnames(adj)=list(founders,founders)
     ibd_graph=abind(ibd_graph,adj)
     blocks=seq(1,16)
     n_grps=16
@@ -90,7 +90,7 @@ if(start<max(pmap$pos)){
 }
 
 ibd_segments=as.data.frame(ibd_segments,stringsAsFactors=F)
-names(ibd_segments)=c('chrom','start','end',hap_founders,'n_haps')
+names(ibd_segments)=c('chrom','start','end', founders,'n_haps')
 print("Finished making IBD block file")
 
 saveRDS(ibd_graph,sprintf('ibd_segments/refinedibd/600K/bg%s_ibd_graph.rds',c))

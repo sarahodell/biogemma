@@ -9,5 +9,10 @@
 #SBATCH --mem 4G
 
 module load R
+declare -a env_list=( "ALL" "BLOIS_2014_OPT" "BLOIS_2017_OPT" "GRANEROS_2015_OPT" "SZEGED_2017_OPT" "STPAUL_2017_WD" "NERAC_2016_WD" )
+#env=$(echo ${env_list[$SLURM_ARRAY_TASK_ID]})
 
-Rscript scripts/epistasis_scan.R $SLURM_ARRAY_TASK_ID
+for env in ${env_list[@]}; do
+  echo $env
+  Rscript scripts/epistasis_scan.R $SLURM_ARRAY_TASK_ID $env
+done

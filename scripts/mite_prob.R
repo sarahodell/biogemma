@@ -18,18 +18,20 @@ mite=c(F,T,T,T,F,T,T,T,T,T,T,F,T,T,T,F)
 has_mite=which(mite==T,mite)
 no_mite=which(mite==F,mite)
 
-bg=readRDS('genotypes/probabilities/geno_probs/raw/bg8_genoprobs_010319.rds')
+bg=readRDS('genotypes/probabilities/geno_probs/raw/bg8_genoprobs.rds')
+dimnames(bg[[1]])[[2]]=founders
 pmap=fread('genotypes/qtl2/startfiles/Biogemma_pmap_c8.csv',data.table=F)
 
 
 founder_probs = readRDS(sprintf('genotypes/probabilities/geno_probs/bg%s_filtered_genotype_probs.rds',chr))
-names(founder_probs)=founders
+#names(founder_probs)=founders
 mite_start=135.947816*1e6
 mite_end=135.946644*1e6
 region=pmap[pmap$pos>135500000 & pmap$pos<136500000,]$marker
 markers=dimnames(founder_probs[[1]])[[2]]
 markers=markers[markers %in% region]
-snp="AX-91102858"
+markers=c("AX-91102912","AX-91103124")
+#snp="AX-91102858"
 sub8=lapply(founder_probs,function(x) x[,markers])
 l=dim(sub8[[1]])[1]
 mitefounders=founder_probs[c(has_mite)]
@@ -41,6 +43,9 @@ t=data.frame(ID=names(mite_prob),m1=mite_prob,m2=mite_prob2,stringsAsFactors=F)
 t$final=rowMeans(t[,c('m1','m2')])
 
 t=t[,c('ID','final')]
+fwrite(t,'GridLMM/mite_probabilities.txt',quote=F,row.names=F,sep='\t')
+
+
 
 #mite_prob2=ifelse(mite_prob2>=0.85,1,0)
 #mite_prob=rowSums(lapply(mitefounders,function(x) x))
@@ -50,10 +55,13 @@ t=t[,c('ID','final')]
 #colnames(mite_prob)=region
 
 marker='AX-91102970'
+mprob=rowSums(bg[[1]][,has_mite,marker])
+t2=data.frame(ID=names(mprob),final=unlist(mprob),stringsAsFactors=F)
+fwrite(t2,'GridLMM/mite_probabilities.txt',quote=F,row.names=F,sep='\t')
 
-at_mite=as.data.frame(mite_prob[,marker])
-at_mite$ID=rownames(at_mite)
-names(at_mite)=c(marker,'ID')
-at_mite=at_mite[,c('ID',marker)]
+#at_mite=as.data.frame(mite_prob[,marker])
+#at_mite$ID=rownames(at_mite)
+#names(at_mite)=c(marker,'ID')
+#at_mite=at_mite[,c('ID',marker)]
 
-fwrite(at_mite,'GridLMM/mite_probabilities.txt',quote=F,row.names=F,sep='\t')
+#fwrite(at_mite,'GridLMM/mite_probabilities.txt',quote=F,row.names=F,sep='\t')

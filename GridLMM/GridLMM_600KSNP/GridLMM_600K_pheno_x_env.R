@@ -44,10 +44,14 @@ X=fread(sprintf('../../genotypes/qtl2/Biogemma_DHgenos/DH_geno_chr%s_binary.csv'
 rownames(X)=X$ind
 X=X[,2:dim(X)[2]]
 
-X=X[rownames(X) %in% data$ID,]
-data=data[data$ID %in% rownames(X),]
+i=intersect(rownames(X),data$ID)
+X=X[i,]
+rownames(data)=data$ID
+data=data[i,]
+K=K[i,i]
+X=as.matrix(X)
 
-dimr=dim(X)[1]
+#dimr=dim(X)[1]
 #dimc=dim(X)[2]
 #mono=c()
 #m=apply(X,MARGIN=2,FUN=function(n) length(unique(n)))
@@ -75,12 +79,16 @@ gwas = GridLMM_GWAS(
                         h2_step = 0.01,
                         max_steps = 100,
                         relmat = list(ID=K),
-                        centerX = TRUE,
+                        centerX = FALSE,
                         scaleX = FALSE,
                         fillNAX = FALSE,
-                        method = 'ML',
+                        method = 'REML',
                         mc.cores = cores,
                         verbose = FALSE
 )
 
 saveRDS(gwas,sprintf('models/chr%s_%s_x_%s_600KSNP_ML.rds',chr,pheno,env))
+
+h2=gwas$setup$h2_start
+hinfo=data.frame(method="600K_SNP",phenotype=pheno,environment=env,chr=chr,h2=h2,hap=NA,stringsAsFactors=F)
+fwrite(hinfo,'../heritabilities.txt',quote=F,sep='\t',row.names=F,append=T)

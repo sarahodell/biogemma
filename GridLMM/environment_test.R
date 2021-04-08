@@ -18,7 +18,7 @@ library('readr')
 library('ggrepel')
 library('RColorBrewer')
 pheno=paste0(p,'_P')
-founders=c("A632_usa","B73_inra","CO255_inra","FV252_inra","OH43_inra", "A654_inra","FV2_inra","C103_inra","EP1_inra","D105_inra","W117_inra","B96","DK63","F492","ND245","VA85")
+founders=c("B73_inra","A632_usa","CO255_inra","FV252_inra","OH43_inra", "A654_inra","FV2_inra","C103_inra","EP1_inra","D105_inra","W117_inra","B96","DK63","F492","ND245","VA85")
 
 threshtable=fread(sprintf('threshold_%.2f_table.txt',thresh),data.table=F)
 
@@ -84,7 +84,7 @@ gg.manhattan2 <- function(df, threshold, col, ylims,bounds){
     #geom_hline(yintercept = -log10(sugg), linetype="dashed") +
 
     # Add highlighted points
-    geom_point(data=subset(df.tmp, sig==T), color=pcol[["male_flowering_d6_P"]], size=2) +
+    geom_point(data=subset(df.tmp, sig==T), color="coral2", size=2) +
 
     # Add label using ggrepel to avoid overlapping
     #geom_label_repel(data=df.tmp[df.tmp$is_annotate=="yes",], aes(label=as.factor(SNP), alpha=0.7), size=5, force=1.3) +
@@ -119,26 +119,36 @@ a2<-gg.manhattan2(df,threshold,
 #qtl_bounds$height=1
 #a3<-ggplot(qtl_bounds,x=alt_cum_right_bound_bp,y=height) + geom_segment(aes(x=cum_left_bound_bp,xend=alt_cum_right_bound_bp,y=height,yend=height),alpha=0.8,size=10,color=pcol[[pheno]]))
 
-phenotypes=c("male_flowering_d6","female_flowering_d6","total_plant_height","harvest_graint_moisture","grain_yield_15","tkw_15")
+#phenotypes=c("male_flowering_d6","female_flowering_d6","total_plant_height","harvest_graint_moisture","grain_yield_15","tkw_15")
 
-snp_bounds=qtl_bounds[qtl_bounds$Method=="600K_SNP" & qtl_bounds$Environment==e,]
-ft_days=c("male_flowering_days","female_flowering_days")
-snp_bounds=snp_bounds[!snp_bounds$Phenotype %in% ft_days,]
-snp_bounds$p_P=paste0(snp_bounds$Phenotype,'_P')
-snp_bounds$heights=c(12,12,12.5,13,13,13.5,14)
-for(i in 1:dim(snp_bounds)[1]){
-  rowdf=snp_bounds[i,]
-  start=rowdf$cum_left_bound_bp
-  end=rowdf$alt_cum_right_bound_bp
-  ph=rowdf$Phenotype
-  h=rowdf$heights
-  p_P=paste0(ph,'_P')
-  a2<-a2+geom_segment(data=snp_bounds,aes(x=start,xend=end,y=h,yend),alpha=0.5,size=15,color=pcol[[p_P]])
+snp_bounds=qtl_bounds[qtl_bounds$Method=="600K_SNP" & qtl_bounds$Environment==e & qtl_bounds$Phenotype==p,]
+if(dim(snp_bounds)[1]!=0){
+  row.names(snp_bounds)=seq(1,dim(snp_bounds)[1])
+  for(i in 1:dim(snp_bounds)[1]){
+    rowdf=snp_bounds[i,]
+    start=rowdf$cum_left_bound_bp
+    end=rowdf$alt_cum_right_bound_bp
+    p_P=paste0(p,'_P')
+    a2<-a2+geom_ribbon(aes_string(xmin=start,xmax=end),alpha=0.2,fill="coral2")
+  }
 }
+#ft_days=c("male_flowering_days","female_flowering_days")
+#snp_bounds=snp_bounds[!snp_bounds$Phenotype %in% ft_days,]
+#snp_bounds$p_P=paste0(snp_bounds$Phenotype,'_P')
+#snp_bounds$heights=c(12,12,12.5,13,13,13.5,14)
+#for(i in 1:dim(snp_bounds)[1]){
+#  rowdf=snp_bounds[i,]
+#  start=rowdf$cum_left_bound_bp
+#  end=rowdf$alt_cum_right_bound_bp
+#  ph=rowdf$Phenotype
+#  h=rowdf$heights
+#  p_P=paste0(ph,'_P')
+#  a2<-a2+geom_segment(data=snp_bounds,aes(x=start,xend=end,y=h,yend),alpha=0.5,size=15,color=pcol[[p_P]])
+#}
 #a2<-a2+geom_segment(aes(x=snp_bounds$cum_left_bound_bp,xend=snp_bounds$alt_cum_right_bound_bp,y=snp_bounds$heights,yend=snp_bounds$heights+0.5),alpha=0.5,size=15,color=sapply(seq(1,nrow(snp_bounds)),function(x) pcol[[snp_bounds$p_P[x]]]))
-png('test_2.png')
-print(a2)
-dev.off()
+#png('test_2.png')
+#print(a2)
+#dev.off()
 
 fp_gwas=fread(sprintf('result_tables/Founder_GWAS_%s_results.txt',e),data.table=F)
 fpthresh=threshtable[threshtable$method=="founder_probs",]
@@ -147,7 +157,7 @@ fpthresh=fpthresh[fpthresh$phenotype==pheno,]$threshold
 title=sprintf("Founder GWAS %s %s",e,p)
 df=fp_gwas[,c('SNP','CHR','BP',pheno)]
 b2<-gg.manhattan2(df,fpthresh,
-             col=mypalette,
+             col=greypalette,
              ylims=c(0,15)) + labs(caption = title)
 
 
@@ -158,6 +168,7 @@ if(dim(fp_bounds)[1]!=0){
     rowdf=fp_bounds[i,]
     start=rowdf$cum_left_bound_bp
     end=rowdf$alt_cum_right_bound_bp
+    p_P=paste0(p,'_P')
     b2<-b2+geom_ribbon(aes_string(xmin=start,xmax=end),alpha=0.2,fill="coral2")
   }
 }
@@ -173,7 +184,7 @@ df=hp_gwas[,c('SNP','CHR','BP',pheno)]
 
 
 c2<-gg.manhattan2(df,hpthresh,
-             col=mypalette,
+             col=greypalette,
              ylims=c(0,15))+ labs(caption = title)
 
 hp_bounds=qtl_bounds[qtl_bounds$Method=="Haplotype_probs" & qtl_bounds$Environment==e & qtl_bounds$Phenotype==p,]
@@ -183,6 +194,7 @@ if(dim(hp_bounds)[1]!=0){
     rowdf=hp_bounds[i,]
     start=rowdf$cum_left_bound_bp
     end=rowdf$alt_cum_right_bound_bp
+    p_P=paste0(p,'_P')
     c2<-c2+geom_ribbon(aes_string(xmin=start,xmax=end),alpha=0.2,fill="coral2")
   }
 }

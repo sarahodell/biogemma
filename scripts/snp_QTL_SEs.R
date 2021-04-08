@@ -4,6 +4,7 @@
 library('data.table')
 library('lme4')
 library('lme4qtl')
+library('GridLMM')
 
 founders=c("B73_inra","A632_usa","CO255_inra","FV252_inra","OH43_inra","A654_inra","FV2_inra",
 "C103_inra","EP1_inra","D105_inra","W117_inra","B96","DK63","F492","ND245","VA85")
@@ -21,7 +22,9 @@ for(i in 1:nrow(qtl)){
   chr=as.character(qtl[i,]$Chromosome)
   snp=qtl[i,]$highest_SNP
   name=qtl[i,]$pheno_env_id
-
+  print(name)
+  pmap=fread(sprintf('genotypes/qtl2/startfiles/Biogemma_pmap_c%s.csv',chr),data.table=F)
+  pos=pmap[pmap$marker==snp,]$pos
   K = fread(sprintf('GridLMM/K_matrices/K_matrix_chr%s.txt',chr),data.table = F,h=T)
   rownames(K) = K[,1]
   K = as.matrix(K[,-1])
@@ -32,36 +35,108 @@ for(i in 1:nrow(qtl)){
   X = fread(sprintf('genotypes/qtl2/Biogemma_DHgenos/DH_geno_chr%s_binary.csv',chr),data.table=F)
   rownames(X)=X$ind
   phenotype = subset(phenotype,Genotype_code %in% rownames(K))
+  test=X[,names(X)[2],drop=F]
   X = X[,snp,drop=F]
-  #colnames(X) = founders
-  #rownames(X) = dimnames(founder_probs[[1]])[[1]]
-  #lowrep=which(apply(X,MARGIN=2,function(x) sum(x>0.8)<5))
-  #if(length(lowrep)>0){
-  #  X=X[,-lowrep]
-  #}
 
   if(env != "ALL"){
     phenotype=phenotype[phenotype$Loc.Year.Treat==env,]
     phenotype = phenotype[!is.na(phenotype$y),]
     phenotype$y=phenotype$y-mean(phenotype$y)
-    rownames(phenotype)=seq(1,nrow(phenotype))
-    #X = X[rownames(X) %in% phenotype$Genotype_code,,]
-    phenotype$X=X[phenotype$Genotype_code,]
-    m0 = relmatLmer(y ~ 0 + X + (1|Genotype_code),data=phenotype,
-    relmat = list(Genotype_code=K))
+    rownames(phenotype)=phenotype$Genotype_code
+
+    i=intersect(phenotype$Genotype_code,rownames(X))
+    X = X[i,,drop=F]
+    phenotype=phenotype[i,]
+    subK=K[i,i]
+    #phenotype$X=X[phenotype$Genotype_code,]
+
+    m0 = relmatLmer(y ~ 1 + unlist(X) + (1|Genotype_code),data=phenotype,
+    relmat = list(Genotype_code=subK))
     se=as.data.frame(summary(m0)$coef)
+    names(se)=c('value','se','tvalue')
+    se[2,]$value=se[-1,]$value + se[1,]$value
+    se$variable_f=factor(c(0,1),levels=c(0,1))
+    alt1=se$value[-1]+se$value[1]
+
+    cores=1
+    vars = as.data.frame(VarCorr(m0))
+    h2_start = vars$vcov[1]/sum(vars$vcov)
+    names(h2_start) = 'ID'
+    test=test[rownames(test) %in% phenotype$Genotype_code,,drop=F]
+    new_X=cbind(X,test)
+    gwas = GridLMM_GWAS(
+                            formula = y~1 + (1|Genotype_code),
+                            test_formula = ~1,
+                            reduced_formula = ~0,
+                            data = phenotype,
+                            weights = NULL,
+                            X = new_X,
+                            X_ID = 'Genotype_code',
+                            h2_start = NULL,
+                            h2_step = 1,
+                            max_steps = 100,
+                            relmat = list(Genotype_code=subK),
+                            centerX = FALSE,
+                            scaleX = FALSE,
+                            fillNAX = FALSE,
+                            method = 'REML',
+                            mc.cores = cores,
+                            verbose = FALSE
+    )
+    betas = unlist(gwas$results[1,grep('beta',colnames(gwas$results))])
+    alt2 = betas[-1]+betas[1]
+    corr=alt2-alt1
   }
   else{
+    phenotype = phenotype[!is.na(phenotype$y),]
     m1=lmer(y~Loc.Year.Treat + (1|Genotype_code),phenotype)
     data_blup = as.data.frame(ranef(m1)$Genotype_code)
     data_blup$ID = rownames(data_blup)
     data_blup$y=data_blup$`(Intercept)`
     data_blup=data_blup[,c('ID','y')]
-    data_blup$X=X[data_blup$ID,]
-    #X = X[rownames(X) %in% data_blup$ID,,]
+
+    i=intersect(data_blup$ID,rownames(X))
+    X = X[i,,drop=F]
+    data_blup=data_blup[i,]
+    subK=K[i,i]
+    #X = X[match(data_blup$ID,rownames(X)),,drop=F]
+    #data_blup$test_snp=X[match(data_blup$ID,rownames(X)),1]
     #X=unlist(unname(X[,1]))
-    m0 = relmatLmer(y ~ 0 + X + (1|ID),data=data_blup,relmat = list(ID=K))
+    m0 = relmatLmer(y ~ 1 + unlist(X) + (1|ID),data=data_blup,relmat = list(ID=subK))
     se=as.data.frame(summary(m0)$coef)
+    names(se)=c('value','se','tvalue')
+    se[2,]$value=se[-1,]$value + se[1,]$value
+    se$variable_f=factor(c(0,1),levels=c(0,1))
+    alt1=se$value[-1]+se$value[1]
+
+    cores=1
+    test=test[rownames(test) %in% data_blup$ID,,drop=F]
+    new_X=cbind(X,test)
+    vars = as.data.frame(VarCorr(m0))
+    h2_start = vars$vcov[1]/sum(vars$vcov)
+    names(h2_start) = 'ID'
+    gwas = GridLMM_GWAS(
+                            formula = y~1 + (1|ID),
+                            test_formula = ~1,
+                            reduced_formula = ~0,
+                            data = data_blup,
+                            weights = NULL,
+                            X = new_X,
+                            X_ID = 'ID',
+                            h2_start = h2_start,
+                            h2_step=1,
+                            max_steps = 100,
+                            relmat = list(ID=subK),
+                            centerX = FALSE,
+                            scaleX = FALSE,
+                            fillNAX = FALSE,
+                            method = 'REML',
+                            mc.cores = cores,
+                            verbose = FALSE
+    )
+    betas = unlist(gwas$results[1,grep('beta',colnames(gwas$results))])
+    alt2 = betas[-1]+betas[1]
+    corr=(alt2-alt1)
   }
   #if(dim(se)[1]!=16){
   #  rows=rownames(se)
@@ -71,7 +146,7 @@ for(i in 1:nrow(qtl)){
   #  rownames(se)=c(rows,paste0('X',founders[lowrep]))
   #}
   #se=se[paste0('X',founders),]
-  ses[[count]]=list(SE=se,qtl_id=name,snp=snp)
+  ses[[count]]=list(SE=se,qtl_id=name,snp=snp,pos=pos,corr=corr)
   count=count+1
     # pheno = cbind(pheno[match(rownames(X),pheno$Genotype_code),1:3],X_diff_mean)
     # model with no intercept

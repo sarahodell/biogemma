@@ -11,7 +11,7 @@ library("tibble")
 library('igraph')
 library('abind')
 
-founders=c("A632_usa","B73_inra","CO255_inra","FV252_inra","OH43_inra", "A654_inra","FV2_inra","C103_inra","EP1_inra","D105_inra","W117_inra","B96","DK63","F492","ND245","VA85")
+founders=c("B73_inra","A632_usa","CO255_inra","FV252_inra","OH43_inra", "A654_inra","FV2_inra","C103_inra","EP1_inra","D105_inra","W117_inra","B96","DK63","F492","ND245","VA85")
 
 #founders2=c("A632","B73","CO255","FV252","OH43", "A654","FV2","C103","EP1","D105","W117","B96","DK63","F492","ND245","VA85")
 
@@ -41,7 +41,7 @@ rownames(ibd)=seq(1,dim(ibd)[1])
 print("Finished formating IBD file")
 
 
-genofile=sprintf("genotypes/probabilities/geno_probs/raw/bg%s_genoprobs_010319.rds",c)
+genofile=sprintf("genotypes/probabilities/geno_probs/raw/bg%s_genoprobs.rds",c)
 pmapfile=sprintf("genotypes/qtl2/startfiles/Biogemma_pmap_c%s.csv",c)
 outfile=sprintf("genotypes/probabilities/haplotype_probs/RefinedIBD_600K/bg%s_refined_ibd_haplotype_probs.rds",c)
 
@@ -49,13 +49,13 @@ outfile=sprintf("genotypes/probabilities/haplotype_probs/RefinedIBD_600K/bg%s_re
 
 pmap=fread(pmapfile,data.table=F)
 #founders=c("A632_usa","B73_inra","CO255_inra","FV252_inra","OH43_inra","A654_inra","FV2_inra","C103_inra","EP1_inra","D105_inra","W117_inra","B96","DK63","F492","ND245","VA85")
-hap_founders=c("B73_inra","A632_usa","CO255_inra","FV252_inra","OH43_inra","A654_inra","FV2_inra","C103_inra","EP1_inra","D105_inra","W117_inra","B96","DK63","F492","ND245","VA85")
+#hap_founders=c("B73_inra","A632_usa","CO255_inra","FV252_inra","OH43_inra","A654_inra","FV2_inra","C103_inra","EP1_inra","D105_inra","W117_inra","B96","DK63","F492","ND245","VA85")
 
 ibd_segments=c()
 start=min(ibd$left_pos) #start with first segment in chromosome
 ibd_graph=array(0,dim=c(16,16,1))
 ibd_graph[,,1]=diag(16)
-dimnames(ibd_graph)=list(hap_founders,hap_founders,"blank")
+dimnames(ibd_graph)=list(founders,founders,"blank")
 if(start>min(pmap$pos)){
   ibd_segments=rbind(ibd_segments,c(c,min(pmap$pos),start,seq(1,16),16))
 }
@@ -79,7 +79,7 @@ while(start<max(ibd$right_pos)){
     rownames(within)=seq(1,dim(within)[1])
     #adj=matrix(0,nrow=16,ncol=16,dimnames=list(founders,founders))
     adj=diag(16)
-    dimnames(adj)=list(hap_founders,hap_founders)
+    dimnames(adj)=list(founders,founders)
     for (i in 1:nrow(within)){
       adj[c(within[i,'ID_1']),c(within[i,'ID_2'])]=1
       adj[c(within[i,'ID_2']),c(within[i,'ID_1'])]=1
@@ -91,7 +91,7 @@ while(start<max(ibd$right_pos)){
   }
   else{
     adj=diag(16)
-    dimnames(adj)=list(hap_founders,hap_founders)
+    dimnames(adj)=list(founders,founders)
     ibd_graph=abind(ibd_graph,adj)
     blocks=seq(1,16)
     n_grps=16
@@ -106,7 +106,7 @@ if(start<max(pmap$pos)){
 }
 
 ibd_segments=as.data.frame(ibd_segments,stringsAsFactors=F)
-names(ibd_segments)=c('chrom','start','end',hap_founders,'n_haps')
+names(ibd_segments)=c('chrom','start','end',founders,'n_haps')
 #dimnames(ibd_graph)[[3]]=c("blank",ibd_segments$start)
 print("Finished making IBD block file")
 
@@ -181,7 +181,7 @@ for(h in groups){
         markers=c(markers,within$marker)
         # for each haplotype group grab the founders in that haplotype group
         # and sum the probability
-        hprob=sapply(seq(1,n_hap), function(x) t(prob) %*% as.vector(line[,hap_founders]==x))
+        hprob=sapply(seq(1,n_hap), function(x) t(prob) %*% as.vector(line[,founders]==x))
         hprobs=rbind(hprobs,hprob)
       }
       #else{

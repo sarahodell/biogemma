@@ -29,7 +29,7 @@ all_chroms=all_chroms[order(all_chroms$pvalues),]
 rownames(all_chroms)=seq(1,size)
 
 
-thresh_table=fread('../threshold_table.txt',data.table=F,stringsAsFactors=F)
+thresh_table=fread('../threshold_0.05_table.txt',data.table=F,stringsAsFactors=F)
 rec=thresh_table$phenotype==pheno & thresh_table$environment==env & thresh_table$method=="founder_probs"
 cutoff=thresh_table[rec,]$threshold
 print(cutoff)

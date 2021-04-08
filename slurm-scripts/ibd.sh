@@ -15,11 +15,15 @@ chr=$SLURM_ARRAY_TASK_ID
 #if [ -f genotypes/probabilities/haplotype_probs/RefinedIBD_600K/min_haps.txt ]; then
 #  rm genotypes/probabilities/haplotype_probs/RefinedIBD_600K/min_haps.txt
 #fi
-base_list=(blank 8 7 7 8 6 7 7 8 7 7)
+#base_list=(blank 8 7 7 8 6 7 7 8 7 7)
+#base=$(echo ${base_list[$chr]})
+#hap_list=$(echo $(seq $base 16))
+
+#Rscript scripts/build_ibd_segments.R $chr
+base_list=( blank $(cut -d$'\t' -f2 genotypes/probabilities/haplotype_probs/RefinedIBD_600K/min_haps.txt) )
 base=$(echo ${base_list[$chr]})
 hap_list=$(echo $(seq $base 16))
 
-#Rscript scripts/build_ibd_segments.R $chr
 echo "Built IBD Segments"
 for hapgrp in ${hap_list[@]}; do
   echo "starting haplogroup $hapgrp"

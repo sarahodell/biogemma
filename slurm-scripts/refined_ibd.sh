@@ -26,9 +26,9 @@ refinedibd=/home/sodell/bin/refined-ibd.17Jan20.102.jar
 #600K
 
 
-data=genotypes/600K/Biogemma_Founders_600K_Genotypes_AGPv4_phased_biallelic_trimmed.vcf.gz
+data=genotypes/600K/Biogemma_Founders_600K_Genotypes_AGPv4_phased_biallelic_reordered.vcf.gz
 out=ibd_segments/refinedibd/600K/Biogemma_600K_Founders_RefinedIBD_chr${chr}
 map=ibd_segments/plink_600K_genetic.map
 
 
-java -Xss5m -Xmx30g -jar $refinedibd nthreads=4 gt=$data window=10.0 length=0.2 chrom=$chr map=$map out=$out
+java -Xss5m -Xmx30g -jar $refinedibd nthreads=2 gt=$data window=10.0 length=0.2 chrom=$chr map=$map out=$out

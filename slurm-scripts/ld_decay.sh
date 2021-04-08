@@ -1,22 +1,13 @@
 #!/bin/bash -l
-#SBATCH -D /home/sodell/projects/impute/Biogemma_121318/
+#SBATCH -D /home/sodell/projects/biogemma
 #SBATCH -J ld_decay
-#SBATCH -o /home/sodell/projects/impute/slurm-logs/out-%j.txt
-#SBATCH -e /home/sodell/projects/impute/slurm-logs/error-%j.txt
+#SBATCH -o /home/sodell/projects/biogemma/slurm-logs/%A_%a.out
+#SBATCH -e /home/sodell/projects/biogemma/slurm-logs/%A_%a.error
 #SBATCH -t 48:00:00
-#SBATCH --array=1-10%5
-#SBATCH --ntasks=8
-#SBATCH --mem=8G
+#SBATCH --array=10
+#SBATCH --ntasks=16
+#SBATCH --mem=125G
 
-module load R/3.6.1
+module load R
 
-Rscript ld_decay.R $SLURM_ARRAY_TASK_ID 8
-
-
-
-
-
-
-
-
-
+Rscript scripts/ldheatmap.R $SLURM_ARRAY_TASK_ID

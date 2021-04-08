@@ -12,26 +12,45 @@ founders=c("B73_inra","A632_usa","CO255_inra","FV252_inra","OH43_inra",
 qtl=fread('GridLMM/Biogemma_QTL.csv',data.table=F)
 qtl$pheno_env_id=paste0(qtl$pheno_env,'_',qtl$ID)
 qtl_overlap=fread('GridLMM/Biogemma_Method_Overlap.csv',data.table=F)
-qtl_overlap$pxe=paste0(qtl_overlap$Phenotype,'_',qtl_overlap$Environment)
 
 f_ses=readRDS('GridLMM/effect_sizes/Founder_prob_QTL_SEs.rds')
 h_ses=readRDS('GridLMM/effect_sizes/Haplotype_prob_QTL_SEs.rds')
-s_notf_ses=readRDS('GridLMM/effect_sizes/SNP_notFounder_prob_QTL_SEs.rds')
-h_notf_ses=readRDS('GridLMM/effect_sizes/Haplotype_notFounder_prob_QTL_SEs.rds')
+s_ses=readRDS('GridLMM/effect_sizes/600K_SNP_QTL_SEs.rds')
+
+#S only
+s_notfh_ses=readRDS('GridLMM/effect_sizes/founder_ES/S_only_not_F_and_H_QTL_SEs.rds')
+s_notfh=fread('GridLMM/result_tables/SNP_only_not_F_and_H_highest_peaks.txt',data.table=F)
+
+# F only
+f_notsh_ses=readRDS('GridLMM/effect_sizes/founder_ES/F_only_not_S_and_H_QTL_SEs.rds')
+f_notsh=fread('GridLMM/result_tables/F_only_not_S_and_H_highest_peaks.txt',data.table=F)
+
+# H only
+h_notsf_ses=readRDS('GridLMM/effect_sizes/founder_ES/H_only_not_S_and_F_QTL_SEs.rds')
+h_notsf=fread('GridLMM/result_tables/H_only_not_S_and_F_highest_peaks.txt',data.table=F)
+
+# S and F
+noth_ses=readRDS('GridLMM/effect_sizes/founder_ES/S_and_F_not_H_QTL_SEs.rds')
+noth=fread('GridLMM/result_tables/S_and_F_not_H_highest_peaks.txt')
+
+nots_sesreadRDS('GridLMM/effect_sizes/founder_ES/F_and_H_not_S_QTL_SEs.rds')
+nots=fread('GridLMM/result_tables/F_and_H_not_S_highest_peaks.txt')
+
+s_f_h_ids=qtl_overlap[qtl_overlap$label=="S_F_H",]$pheno_env_id
+s_only_ids=qtl_overlap[qtl_overlap$label=="S_only",]$pheno_env_id
+f_only_ids=qtl_overlap[qtl_overlap$label=="F_only",]$pheno_env_id
+h_only_ids=qtl_overlap[qtl_overlap$label=="H_only",]$pheno_env_id
+s_and_f_ids=qtl_overlap[qtl_overlap$label=="S_and_F",]$pheno_env_id
+f_and_h_ids=qtl_overlap[qtl_overlap$label=="F_and_H",]$pheno_env_id
 
 
-f_nots=fread('GridLMM/effect_sizes/Founder_notSNP_highest_peaks.txt',data.table=F)
-s_notf=fread('GridLMM/effect_sizes/SNP_notFounder_highest_peaks.txt',data.table=F)
 
-f_noth=fread('GridLMM/effect_sizes/Founder_notHaplotype_highest_peaks.txt',data.table=F)
-h_notf=fread('GridLMM/effect_sizes/Haplotype_notFounder_highest_peaks.txt',data.table=F)
-
-f_nots_plots=list()
+nots_plots=list()
 count=0
 
 # In founders but not SNPs
 m1=c('Founder_probs','600K_SNP')
-f_nots_ids=unique(f_nots$pheno_env_id)
+nots_ids=unique(f_nots$pheno_env_id)
 for(q in f_nots_ids){
   line=qtl[qtl$pheno_env_id == q & qtl$Method==m1[1],]
   #rownames(sub)=seq(1,nrow(sub))
