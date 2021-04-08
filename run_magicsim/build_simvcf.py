@@ -29,12 +29,12 @@ def co_loc(sample,bedfile):
     """
     s = bedfile[bedfile['sample']==sample]
     locs=[]
-    parents = s['donor1'].unique()
+    parents = s['donor'].unique()
     for index,row in s.iterrows():
-        locs.append([row['chr'],int(row['start']),int(row['end']),row['donor1']])
+        locs.append([row['chr'],int(row['start']),int(row['end']),row['donor']])
     return locs,parents
 
-    
+
 def marker_regions(pbreaks,markerfile,rfile,c=10):
     markers=[]
     with open(markerfile,'r') as infile:
@@ -51,14 +51,14 @@ def marker_regions(pbreaks,markerfile,rfile,c=10):
     with open(rfile,'w') as outfile:
     	outfile.write(regions)
 
-        
+
 def all_regions(pbreaks,rfile):
     txt=""
     for i in pbreaks:
         txt+='{0}\t{1}\t{2}\n'.format(i[0],i[1],i[2])
     with open(rfile,'w') as outfile:
         outfile.write(txt)
-        
+
 
 def bcftools_view(donorfile,regionsfile=None,header=False):
     if header ==True:
@@ -73,12 +73,13 @@ def main():
     args=get_args()
     bedfile = pd.read_csv(args.infile,sep='\t')
     samples = bedfile['sample'].unique()
-    header,stderr=bcftools_view(donorfile='{0}/Biogemma_Founders_600K_Genotypes_AGPv4_no_tester_chr10.vcf.gz'.format(args.donorpath),header=True)
-    print(stderr)
+    header,stderr=bcftools_view(donorfile='{0}/Biogemma_Founders_600K_Genotypes_AGPv4_no_tester.vcf.gz'.format(args.donorpath),header=True)
+    #print(str(stderr,'utf-8'))
     for sample in samples:
-        vcf = str(header)
+        vcf = str(header,'utf-8')
         breaks,parents = co_loc(sample,bedfile)
         for i in parents:
+            #print(i)
             pbreaks = [j for j in breaks if j[3]==i]
             regionsfile='{0}_{1}_regions.txt'.format(i,sample)
             if args.all == True:
@@ -86,9 +87,9 @@ def main():
             else:
                 marker_regions(pbreaks=pbreaks,markerfile=args.markerfile,rfile=regionsfile,c=10)
             positions,stderr=bcftools_view(donorfile='{0}/{1}_600K.vcf.gz'.format(args.donorpath,i),regionsfile=regionsfile)
-            print(stderr)
-            vcf+=str(positions)
-        with open('tmp/{0}_{1}'.format(sample,args.outfile),'w') as outfile:
+            #print(str(stderr,'utf-8'))
+            vcf+=str(positions,'utf-8')
+        with open('{0}_{1}'.format(sample,args.outfile),'w') as outfile:
             outfile.write(vcf)
 
 
