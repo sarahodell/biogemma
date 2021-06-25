@@ -105,10 +105,25 @@ plotdf$chrom==as.numeric(chr)
 
 
 
-#cutoff=-log10(0.05/tests)
 
 fwrite(plotdf,sprintf('GridLMM/MITE_only/chr%s_%s_vgt1_epistasis_scan.txt',chr,env),quote=F,sep='\t',row.names=F)
 
-#png('GridLMM/MITE_only/vgt1_epistasis_scan.png',width=1000,height=800)
-#print(ggplot(plotdf,aes(x=pos/1e6,y=log10p)) + geom_point() + geom_hline(yintercept=cutoff) + facet_grid(.~chrom))
-#dev.off()
+env="ALL"
+all=c()
+for(chr in 1:10){
+  p=fread(sprintf('epistasis/chr%.0f_%s_vgt1_epistasis_scan.txt',chr,env),data.table=F)
+  p$chr=chr
+  all=rbind(all,p)
+}
+
+tests=nrow(all)
+cutoff=-log10(0.05/tests)
+
+
+
+png('epistasis/vgt1_epistasis_scan.png',width=1500,height=1000)
+print(ggplot(all,aes(x=pos/1e6,y=log10p)) + geom_point() +
+ geom_hline(yintercept=cutoff,color='red') + facet_grid(.~chr) +
+ xlab("Position (Mb)") + ylab('-log10(p-value)') +
+  theme_classic() + theme(axis.text.x=element_text(size=16),axis.text.y=element_text(size=18),axis.title.x=element_text(size=20),axis.title.y=element_text(size=20)))
+dev.off()

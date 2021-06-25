@@ -9,10 +9,12 @@ library('data.table')
 
 #r2 cutoff of 0.95
 cutoff=0.95
-founders=c("B73_inra","A632_usa","CO255_inra","FV252_inra",
-           "OH43_inra","A654_inra","FV2_inra","C103_inra",
-           "EP1_inra","D105_inra","W117_inra","B96","DK63",
-           "F492","ND245","VA85")
+#founders=c("B73_inra","A632_usa","CO255_inra","FV252_inra",
+#           "OH43_inra","A654_inra","FV2_inra","C103_inra",
+#           "EP1_inra","D105_inra","W117_inra","B96","DK63",
+#           "F492","ND245","VA85")
+flist=fread('founder_cross_info.txt',data.table=F)
+founders=unlist(unname(flist[flist$V1==rep,2:17]))
 geno=readRDS(sprintf('qtl2_files/MAGIC_DHSim_rep%.0f_c%s_genoprobs.rds',rep,chr))
 dimnames(geno[[1]])[[2]]=founders
 pmap=fread(sprintf('../genotypes/qtl2/startfiles/Biogemma_pmap_c%s.csv',chr),data.table=F)

@@ -61,6 +61,9 @@ for(i in 1:nrow(qtl)){
     X = X[i,]
     phenotype=phenotype[i,]
     subK=K[i,i]
+    frep2=apply(X,MARGIN=2,function(x) sum(x[x>0.8]))
+    fkeep=founders[frep2>2]
+    X=X[,fkeep]
     #drop2=which(colSums(X)<=5)
     #if(length(drop2)!=0){
     #  X_filt=X[,-drop2]
@@ -82,7 +85,7 @@ for(i in 1:nrow(qtl)){
     m4 = relmatLmer(y ~ 0 + X + (1|Genotype_code),data=phenotype,relmat = list(Genotype_code=subK))
     se4=as.data.frame(summary(m4)$coef,stringsAsFactors=F)
     names(se4)=c('value','se','tvalue')
-    rownames(se4)=founders
+    rownames(se4)=fkeep
     se4$founder=rownames(se4)
     se4$variable_f=factor(se4$founder,levels=se4$founder)
     #se4[2,]$value=se4[-1,]$value + se4[1,]$value

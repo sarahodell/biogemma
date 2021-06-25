@@ -6,7 +6,7 @@
 #SBATCH -t 24:00:00
 #SBATCH --array=1-10
 #SBATCH --ntasks=1
-#SBATCH --mem 8G
+#SBATCH --mem 7G
 
 module load R
 

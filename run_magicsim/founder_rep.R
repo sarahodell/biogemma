@@ -26,10 +26,12 @@ null=rep(1/16,16)
 #dev.off()
 
 
-hap_founders=c("B73_inra","A632_usa","CO255_inra","FV252_inra","OH43_inra","A654_inra","FV2_inra","C103_inra","EP1_inra","D105_inra","W117_inra","B96","DK63","F492","ND245","VA85")
+#hap_founders=c("B73_inra","A632_usa","CO255_inra","FV252_inra","OH43_inra","A654_inra","FV2_inra","C103_inra","EP1_inra","D105_inra","W117_inra","B96","DK63","F492","ND245","VA85")
 
 
 #fprobs=readRDS(sprintf('qtl2_files/MAGIC_DHSim_rep%.0f_c%s_genoprobs.rds',rep,chr))
+crossfile=fread('founder_cross_info.txt',data.table=F)
+hap_founders=unlist(unname(crossfile[crossfile$V1==rep,2:17]))
 fprobs=readRDS(sprintf('qtl2_files/filtered/bg%s_rep%.0f_filtered_genotype_probs.rds',chr,rep))
 
 pmap=fread(sprintf('../genotypes/qtl2/startfiles/Biogemma_pmap_c%s.csv',chr),data.table=F)
@@ -39,9 +41,18 @@ m=match(dimnames(fprobs[[1]])[[2]],pmap$marker)
 markers=dimnames(fprobs[[1]])[[2]]
 n_markers=dim(fprobs[[1]])[2]
 size=dim(fprobs[[1]])[1]
-fsums=data.frame(matrix(unlist(lapply(fprobs, function(x) round(colSums(x)))),nrow=length(fprobs),byrow=T),stringsAsFactors=F)
-names(fsums)=markers
-p_chi=sapply(seq(1,n_markers), function(x) chisq.test(x=round(fsums[,x]),p=null)$p.value)
+fsums=c()
+for(m in 1:n_markers){
+  X = do.call(cbind,lapply(fprobs,function(x) x[,m]))
+  frep2=apply(X,MARGIN=2,function(x) round(sum(x[x>0.8])))
+  fsums=rbind(fsums,(c(markers[m],as.numeric(unlist(frep2)))))
+}
+fsums=as.data.frame(fsums,stringsAsFactors=F)
+fsums[,2:17]=apply(fsums[,2:17],MARGIN=2,function(x) as.numeric(x))
+
+names(fsums)=c('marker',hap_founders)
+rownames(fsums)=markers
+p_chi=sapply(seq(1,n_markers), function(x) chisq.test(x=round(fsums[x,hap_founders]),p=null)$p.value)
 #p_chi=t(p_chi)
 p_chi=data.frame(marker=markers,p_chi=unlist(p_chi),stringsAsFactors=F)
 rownames(p_chi)=seq(1,dim(p_chi)[1])
@@ -67,6 +78,8 @@ dev.off()
 png(sprintf('selection/bg%s_chi_squared_scan_rep%.0f_cM.png',chr,rep),width=1600, height=800)
 print(ggplot(p_chi,aes(x=cM,y=-log10(p_chi))) + geom_point() + geom_hline(yintercept=bonf,color="red") + xlab("Position (cM)") + ylab("Chi-Squared -log10(P-Value)") + ggtitle(sprintf("Chi-Squared Test for Representation of Founder Alleles on Chromosome %s",chr)))
 dev.off()
+
+
 
 #upper_p_chi=sapply(seq(1,dim(fsums)[2]), function(x) chisq.test(round(fsums[,x]),null,df=15,lower.tail=F))
 #upper_p_chi=t(upper_p_chi)

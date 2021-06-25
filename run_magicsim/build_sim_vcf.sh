@@ -4,7 +4,7 @@
 #SBATCH -o /home/sodell/projects/biogemma/slurm-logs/%A_%a.out
 #SBATCH -e /home/sodell/projects/biogemma/slurm-logs/%A_%a.error
 #SBATCH -t 24:00:00
-#SBATCH --array=1-100
+#SBATCH --array=1-100%10
 #SBATCH --mem 7G
 #SBATCH --ntasks 1
 
@@ -34,7 +34,7 @@ source activate pandas-env
 cd /scratch/sodell/rep${rep}_tmp
 founder_path=/scratch/sodell/individual_founders
 build_simvcf=/home/sodell/projects/biogemma/run_magicsim/build_simvcf.py
-break_path=/home/sodell/projects/biogemma/run_magicsim/breaktables/MAGIC_DH_Sim_rep${rep}_breaktable.txt
+break_path=/home/sodell/projects/biogemma/run_magicsim/breaktables/MAGIC_DH_Sim_rep${rep}_breaktable_v2.txt
 out_path=MAGIC_DHSim_rep${rep}.vcf
 
 echo "Building single line vcfs"
@@ -42,9 +42,9 @@ echo "Building single line vcfs"
 python $build_simvcf $break_path $out_path $founder_path --all True
 cd /home/sodell/projects/biogemma/run_magicsim
 #i=1
-conda deactivate pandas-env
+conda deactivate
 echo "Ordering and indexing vcfs"
-for i in {1..400}; do
+for i in {1..344}; do
     echo Sim${i} > /scratch/sodell/rep${rep}_tmp/Sim${i}.txt
     cat /scratch/sodell/rep${rep}_tmp/Sim${i}_MAGIC_DHSim_rep${rep}.vcf | vcf-sort | bcftools reheader -s /scratch/sodell/rep${rep}_tmp/Sim${i}.txt -o /scratch/sodell/rep${rep}_tmp/Sim${i}_MAGIC_DHSim_rep${rep}_edit.vcf
     bgzip /scratch/sodell/rep${rep}_tmp/Sim${i}_MAGIC_DHSim_rep${rep}_edit.vcf
@@ -52,7 +52,7 @@ for i in {1..400}; do
     echo /scratch/sodell/rep${rep}_tmp/Sim${i}_MAGIC_DHSim_rep${rep}_edit.vcf.gz >> /scratch/sodell/rep${rep}_tmp/line_names.txt
 done
 echo "Merging vcfs"
-bcftools merge -l /scratch/sodell/rep${rep}_tmp/line_names.txt -m all -Oz > merged_vcfs/MAGIC_DHSimAll_rep${rep}.vcf.gz
+bcftools merge -l /scratch/sodell/rep${rep}_tmp/line_names.txt -m all -Oz > merged_vcfs/MAGIC_DHSimAll_rep${rep}_v2.vcf.gz
 
 #rm *regions.txt
 rm -r /scratch/sodell/rep${rep}_tmp

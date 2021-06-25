@@ -1,11 +1,11 @@
 #!/bin/bash -l
-#SBATCH -D /home/sodell/projects/biogemma
+#SBATCH -D /home/sodell/projects/biogemma/stats/ld_decay
 #SBATCH -J plink
 #SBATCH -o /home/sodell/projects/biogemma/slurm-logs/out-%j.txt
 #SBATCH -e /home/sodell/projects/biogemma/slurm-logs/error-%j.txt
 #SBATCH -t 48:00:00
-#SBATCH --ntasks=16
-#SBATCH --mem 63G
+#SBATCH --ntasks=7
+#SBATCH --mem 55G
 
 module load plink
 
@@ -13,4 +13,17 @@ module load plink
 
 #plink --threads 16 --bfile genotypes/plink_files/600K/Biogemma_DHLines_600K_Genotypes_binary --r2 with-freqs inter-chr --ld-window-r2 0.9 --out stats/ld_decay/Biogemma_DHLines_rsquared_all_chroms_r2_0.9
 
-plink --threads 16 --bfile genotypes/plink_files/600K/Biogemma_DHLines_600K_Genotypes_binary --r2 with-freqs --ld-window-r2 0 --ld-window 1000 --ld-window-kb 10000 --out stats/ld_decay/Biogemma_DHLines_rsquared
+#if [ ! -d /scratch/sodell ]; then
+#  mkdir /scratch/sodell;
+#fi
+
+#plink --threads 16 --bfile /home/sodell/projects/biogemma/genotypes/plink_files/600K/Biogemma_DHLines_600K_Genotypes_binary --r2 with-freqs --ld-snp-list snplist.txt --ld-window-r2 0 --ld-window 99999 --ld-window-kb 1000000 --out Biogemma_DHLines_rsquared
+
+#awk '{print > $1"_rsquared.ld"}' Biogemma_DHLines_rsquared.ld
+#awk '$1 == 8' Biogemma_DHLines_rsquared.ld > 8_rsquared.ld
+#awk '$1 == 9' test.ld > 9_test.ld
+
+echo "Starting c9"
+plink --threads 7 --bfile /home/sodell/projects/biogemma/genotypes/plink_files/600K/Biogemma_DHLines_600K_Genotypes_binary --r2 with-freqs --ld-snp-list c9_snplist.txt --ld-window-r2 0 --ld-window 99999 --ld-window-kb 1000000 --out 9_rsquared
+echo "Starting c10"
+plink --threads 7 --bfile /home/sodell/projects/biogemma/genotypes/plink_files/600K/Biogemma_DHLines_600K_Genotypes_binary --r2 with-freqs --ld-snp-list c10_snplist.txt --ld-window-r2 0 --ld-window 99999 --ld-window-kb 1000000 --out 10_rsquared

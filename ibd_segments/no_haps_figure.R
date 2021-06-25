@@ -77,38 +77,109 @@ count=1
 for(c in 1:10){
   ibd=fread(sprintf('refinedibd/600K/bg%.0f_refined_ibd_blocks.txt',c),data.table=F)
   #all_haps=rbind(all_haps,ibd)
+  gmap=fread(sprintf('../genotypes/qtl2/startfiles/Biogemma_gmap_c%.0f.csv',c),data.table=F)
+  names(gmap)=c('marker','chr','cM')
+  pmap=fread(sprintf('../genotypes/qtl2/startfiles/Biogemma_pmap_c%.0f.csv',c),data.table=F)
+  gmap$pos=pmap[match(gmap$marker,pmap$marker),]$pos
 
-  p = ggplot(ibd,aes(ymin=0)) + geom_rect(aes(xmin = start/1e6, xmax = end/1e6, ymax = n_haps)) + labs(subtitle=c) + theme_classic()
+  ibd$cMstart=gmap[match(ibd$start,gmap$pos),]$cM
+  ibd$cMend=gmap[match(ibd$end,gmap$pos),]$cM
+  ibd$cMsize=ibd$cMend-ibd$cMstart
+  #p = ggplot(ibd,aes(ymin=0)) + geom_rect(aes(xmin = start/1e6, xmax = end/1e6, ymax = n_haps)) + labs(subtitle=c) + theme_classic()
   #if(c==5){
   #  p = p + xlab("Position (Mb)") + theme(axis.title.y=element_blank())
   #}
 
-  if(c==1){
-    p = p + ylab("Number of Haplotypes") + theme(axis.title.x=element_blank())
-  }
-  else{
-    p = p + theme(axis.title.x=element_blank(),axis.title.y=element_blank())
-  }
-  all_haps[[count]]=p
+  #if(c==1){
+  #  p = p + ylab("Number of Haplotypes") + theme(axis.title.x=element_blank())
+  #}
+  #else{
+  #  p = p + theme(axis.title.x=element_blank(),axis.title.y=element_blank())
+  #}
+  #all_haps[[count]]=p
   all_ibd=rbind(all_ibd,ibd)
   count=count+1
 }
+#p = ggplot(all_ibd[all_ibd$chrom==6,],aes(ymin=n_haps)) + geom_rect(aes(xmin = start/1e6, xmax = end/1e6, ymax = n_haps)) + xlab("Number of Haplotypes") + theme_classic()
+theme_set(theme_classic())
+#theme_update(text=element_text(family="Times"))
+theme_update(plot.caption = element_text(hjust = 0))
+theme_update(axis.text.x=element_text(size=24),
+axis.text.y=element_text(size=24))
+theme_update(plot.title = element_text(size=14),
+axis.title=element_text(size=14))
+theme_update(panel.background=element_blank())
+theme_update(plot.caption=element_text(size=14))
+p = ggplot(all_ibd[all_ibd$chrom==4,],aes(x = start/1e6, y=n_haps)) +
+geom_segment(aes(xend = end/1e6, yend = n_haps),size=10) +
+ xlab("Position (Mb)") +
+ ylab("Number of Haplotypes")
 
-allp=plot_grid(plotlist=all_haps,ncol=10)
+#allp=plot_grid(plotlist=all_haps,ncol=10)
 
 png('no_haps_per_chrom.png',width=2000,height=800)
 print(allp)
 dev.off()
 
 all_ibd$size=all_ibd$end-all_ibd$start
-h=ggplot(all_ibd,aes(x=as.factor(n_haps),y=log10(size))) + geom_jitter(alpha=0.6) + geom_boxplot(alpha=0.75,fill='grey') + theme_classic() + xlab('Number of Unique Haplotypes') + ylab('Haplotype Block Size log10(bp)')
+avg_haps=mean(all_ibd$n_haps)
+theme_set(theme_classic())
+#theme_update(text=element_text(family="Times"))
+theme_update(plot.caption = element_text(hjust = 0))
+theme_update(axis.text.x=element_text(size=24),
+axis.text.y=element_text(size=24))
+theme_update(plot.title = element_text(size=14),
+axis.title=element_text(size=30))
+theme_update(panel.background=element_blank())
+theme_update(plot.caption=element_text(size=14))
+h=ggplot(all_ibd,aes(x=n_haps)) +
+geom_histogram(binwidth=1,center=T) +
+ geom_vline(xintercept=avg_haps) +
+ xlab('Number of Unique Haplotypes') + ylab('Frequency') +
+  scale_x_continuous(breaks=c(6,8,10,12,14,16))
+avg_size=mean(log10(all_ibd$size))
+theme_set(theme_classic())
+#theme_update(text=element_text(family="Times"))
+theme_update(plot.caption = element_text(hjust = 0))
+theme_update(axis.text.x=element_text(size=24),
+axis.text.y=element_text(size=24))
+theme_update(plot.title = element_text(size=14),
+axis.title=element_text(size=30))
+theme_update(panel.background=element_blank())
+theme_update(plot.caption=element_text(size=14))
+h2=ggplot(all_ibd,aes(x=log10(size))) +
+ geom_histogram() + geom_vline(xintercept=avg_size) +
+  xlab('Haplotype Block Size (log10(bp))') +
+   ylab('Frequency')
+avg_size2=mean(all_ibd$cMsize)
+theme_set(theme_classic())
+#theme_update(text=element_text(family="Times"))
+theme_update(plot.caption = element_text(hjust = 0))
+theme_update(axis.text.x=element_text(size=24),
+axis.text.y=element_text(size=24))
+theme_update(plot.title = element_text(size=14),
+axis.title=element_text(size=30))
+theme_update(panel.background=element_blank())
+theme_update(plot.caption=element_text(size=14))
+h3=ggplot(all_ibd,aes(x=cMsize)) + geom_histogram(binwidth=0.1) +
+ geom_vline(xintercept=avg_size2) +
+  xlab('Haplotype Block Size (cM)') + ylab('Frequency')
 
-png('hap_size_dist.png',width=800,height=800)
-print(h)
+
+#png('hap_size_dist.png',width=800,height=800)
+#print(h)
+#dev.off()
+p1=plot_grid(p,h,rel_widths=c(6,3),ncol=2,labels=c("A","B"))
+p2=plot_grid(h2,h3,ncol=2,labels = c("C","D"))
+p3=plot_grid(p1,p2,nrow=2)
+
+png('figure2.png',width=1500,height=1000)
+print(p3)
 dev.off()
 
-p1=plot_grid(ef,h,ncol=2,rel_widths=c(4,3))
-p2=plot_grid(allp,p1,nrow=2,rel_heights=c(6,4),labels = c("A", "B", "C"))
+
+p1=plot_grid(h,h2,h3,ncol=3,labels=c("B","C","D"))
+p2=plot_grid(p,p1,nrow=2,labels = c("A",""))
 
 png('figure2.png',width=2000,height=1000)
 print(p2)

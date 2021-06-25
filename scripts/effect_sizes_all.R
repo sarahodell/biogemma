@@ -104,6 +104,8 @@ founder_se=function(i,focal,qtl){
       keptm=lowrep[[findm]]$marker
     }
   }
+  lowrep=readRDS(sprintf('genotypes/probabilities/geno_probs/dropped/bg%s_low_rep_markers.rds',chr))
+  indm=which(unlist(lapply(lowrep, function(x) snp %in% x)))
   K = fread(sprintf('GridLMM/K_matrices/K_matrix_chr%s.txt',chr),data.table = F,h=T)
   rownames(K) = K[,1]
   K = as.matrix(K[,-1])
@@ -125,8 +127,9 @@ founder_se=function(i,focal,qtl){
     X = X[i,]
     phenotype=phenotype[i,]
     subK=K[i,i]
-    frep=colSums(X)
-    fkeep=founders[frep>1]
+    #frep=colSums(X)
+    frep2=apply(X,MARGIN=2,function(x) sum(x[x>0.8]))
+    fkeep=founders[frep2>2]
     X=X[,fkeep]
     m4 = relmatLmer(y ~ 0 + X + (1|Genotype_code),data=phenotype,relmat = list(Genotype_code=subK))
     se4=as.data.frame(summary(m4)$coef,stringsAsFactors=F)
@@ -147,8 +150,8 @@ founder_se=function(i,focal,qtl){
     X = X[i,]
     data_blup=data_blup[i,]
     subK=K[i,i]
-    frep=colSums(X)
-    fkeep=founders[frep>1]
+    frep2=apply(X,MARGIN=2,function(x) sum(x[x>0.8]))
+    fkeep=founders[frep2>2]
     X=X[,fkeep]
     m4 = relmatLmer(y ~ 0 + X + (1|ID),data=data_blup,relmat = list(ID=subK),REML=T)
     se4=as.data.frame(summary(m4)$coef,stringsAsFactors=F)
@@ -212,8 +215,9 @@ haplotype_se=function(i,focal,qtl){
     X = X[i,]
     phenotype=phenotype[i,]
     subK=K[i,i]
-    hreps=colSums(X)
-    hkeep=allhaps[hreps>1]
+    #hreps=colSums(X)
+    hrep2=apply(X,MARGIN=2,function(x) sum(x[x>0.8]))
+    hkeep=allhaps[hrep2>2]
     X=X[,hkeep]
     m0 = relmatLmer(y ~ 0 + X + (1|Genotype_code),data=phenotype,relmat = list(Genotype_code=subK))
     se4=as.data.frame(summary(m0)$coef,stringsAsFactors=F)
@@ -233,8 +237,9 @@ haplotype_se=function(i,focal,qtl){
     X = X[i,]
     data_blup=data_blup[i,]
     subK=K[i,i]
-    hreps=colSums(X)
-    hkeep=allhaps[hreps>1]
+    #hreps=colSums(X)
+    hrep2=apply(X,MARGIN=2,function(x) sum(x[x>0.8]))
+    hkeep=allhaps[hrep2>2]
     X=X[,hkeep]
     m0 = relmatLmer(y ~ 0 + X + (1|ID),data=data_blup,relmat = list(ID=subK))
     se4=as.data.frame(summary(m0)$coef,stringsAsFactors=F)

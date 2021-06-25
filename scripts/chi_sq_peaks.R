@@ -41,3 +41,39 @@ segments=as.data.frame(segments)
 rownames=seq(1,dim(segments)[1])
 names(segments)=c('chr','start','end','markers','hapgrp')
 fwrite(segments,sprintf('selection/haplotype_probs/bg%s_chi_peak_seqments.bed',chr),row.names=F,quote=F,sep='\t',col.names=F)
+
+
+total_tests=73248
+bonf=-log10(0.05 / total_tests)
+pmap=fread(sprintf('genotypes/qtl2/startfiles/Biogemma_pmap_c%s.csv',chr),data.table=F)
+chipeaks=fread(sprintf('selection/founder_probs/bg%s_founder_chisq_results.txt',chr),data.table=F)
+chipeaks$sig=-log10(chipeaks$p_chi)>=bonf
+
+segments=c()
+for(i in 1:nrow(chipeaks)){
+  line=chipeaks[i,]
+  if(line$sig){
+    left_bound=line$pos
+    m=line$marker
+    fdropped=readRDS(sprintf('genotypes/probabilities/geno_probs/dropped/bg%s_dropped_markers_genoprobs.rds',chr))
+    dropped_markers=fdropped[[which(unlist(lapply(fdropped,function(x) x$marker==m)))]]$linked
+    if (!is.null(dropped_markers)) {
+      sub=pmap[pmap$marker %in% dropped_markers,]
+      rownames(sub)=seq(1,dim(sub)[1])
+      right=which.max(sub$pos)
+      right_snp=sub[right,]$marker
+      right_bound=sub[right,]$pos
+    }
+    else {
+      right_bound=pmap[(which(pmap$marker==m)+1),]$pos - 1
+      right_snp=chipeaks[(i+1),]$marker
+    }
+    seg=c(chr,left_bound,right_bound,paste0(m,'..',right_snp))
+    segments=rbind(segments,seg)
+  }
+}
+
+segments=as.data.frame(segments)
+rownames=seq(1,dim(segments)[1])
+names(segments)=c('chr','start','end','markers')
+fwrite(segments,sprintf('selection/founder_probs/bg%s_chi_peak_seqments.bed',chr),row.names=F,quote=F,sep='\t',col.names=F)

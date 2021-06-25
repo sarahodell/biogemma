@@ -44,7 +44,7 @@ actual_predicted=function(ind){
   return(sum(mdf$actual==mdf$predicted)/nrow(mdf) * 100)
 }
 
-n_inds=paste0('Sim',seq(1,400))
+n_inds=paste0('Sim',seq(1,344))
 
 print(system.time({
 results=mclapply(n_inds,actual_predicted,mc.cores=cores)

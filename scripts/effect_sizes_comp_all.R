@@ -161,7 +161,7 @@ for(i in seq(1,l,3)){
   fmelt$s_tvalue=smelt$tvalue
 
   grouptype=qtl_overlap[qtl_overlap$pheno_env_id==name,]$label
-  focal=ses[[1]]$focal
+  focal=ses[[i]]$focal
   s_f_h_data[[acount]]=list(data=fmelt,qtl_id=name,focal=focal,grouptype=grouptype)
   s_f_h_plots[[acount]]=make_plot(fmelt,name,focal,grouptype)
   acount=acount+1

@@ -1,10 +1,10 @@
 #!/bin/bash -l
 #SBATCH -D /home/sodell/projects/biogemma/run_magicsim
 #SBATCH -J magicsim
-#SBATCH -o /home/sodell/projects/biogemma/slurm-logs/out-%j.txt
-#SBATCH -e /home/sodell/projects/biogemma/slurm-logs/error-%j.txt
+#SBATCH -o /home/sodell/projects/biogemma/slurm-logs/%A_%a.out
+#SBATCH -e /home/sodell/projects/biogemma/slurm-logs/%A_%a.error
 #SBATCH -t 24:00:00
-#SBATCH --array=1-1000
+#SBATCH --array=1-100
 #SBATCH --mem 3G
 #SBATCH --ntasks 1
 

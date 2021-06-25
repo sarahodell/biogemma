@@ -28,52 +28,65 @@ all_p_chi=c()
 baselist=c(8,7,7,8,6,7,7,8,7,7)
 for(h in baselist[as.numeric(c)]:16){
   test=ibd[ibd$n_haps==h,]
-  rownames(test)=seq(1,dim(test)[1])
+  if(nrow(test)>0){
+    rownames(test)=seq(1,dim(test)[1])
 
-  env1=pmap
-  env1$pos_end=env1$pos
-  env1=as.data.table(env1)
-  env2=test
-  env2$end=env2$end-1
-  setkey(env2,start,end)
-  comparison=foverlaps(env1,env2,by.x=c('pos','pos_end'),by.y=c('start','end'),nomatch=NULL)
-
-
-  hprobs=readRDS(sprintf('genotypes/probabilities/haplotype_probs/RefinedIBD_600K/bg%s_filtered_haplogroup%.0f_probs.rds',c,h))
-  size=dim(hprobs[[1]])[1]
-  n_markers=dim(hprobs[[1]])[2]
-
-  comparison=comparison[comparison$marker %in% dimnames(hprobs[[1]])[[2]],]
-  markers=comparison$marker
-  # Get weights for null expectation
-  # for each marker, count the number of founders in each haplotype
+    env1=pmap
+    env1$pos_end=env1$pos
+    env1=as.data.table(env1)
+    env2=test
+    env2$end=env2$end-1
+    setkey(env2,start,end)
+    comparison=foverlaps(env1,env2,by.x=c('pos','pos_end'),by.y=c('start','end'),nomatch=NULL)
 
 
-  all_weights=sapply(seq(1,n_markers), function(i) get_weighted_null(i,comparison))
-  hsums=data.frame(matrix(unlist(lapply(hprobs, function(x) round(colSums(x)))),nrow=length(hprobs),byrow=T),stringsAsFactors=F)
-  names(hsums)=markers
+    hprobs=readRDS(sprintf('genotypes/probabilities/haplotype_probs/RefinedIBD_600K/bg%s_filtered_haplogroup%.0f_probs.rds',c,h))
+    size=dim(hprobs[[1]])[1]
+    n_markers=dim(hprobs[[1]])[2]
+
+    comparison=comparison[comparison$marker %in% dimnames(hprobs[[1]])[[2]],]
+    markers=comparison$marker
+    # Get weights for null expectation
+    # for each marker, count the number of founders in each haplotype
 
 
-  p_chi=sapply(seq(1,n_markers), function(x) chisq.test(x=hsums[,x],p=all_weights[,x])$p.value)
-#p_chi=t(p_chi)
-  p_chi=data.frame(marker=markers,p_chi=unlist(p_chi),hagrp=h,stringsAsFactors=F)
-  rownames(p_chi)=seq(1,dim(p_chi)[1])
-  p_chi$pos=comparison$pos
+    all_weights=sapply(seq(1,n_markers), function(i) get_weighted_null(i,comparison))
 
-  for(m in p_chi[-log10(p_chi$p_chi)>=bonf,]$marker){
-    count=count+1
-    index=which(colnames(hsums)==m)
-    o=hsums[,index]
-    e=all_weights[,index]*nrow(hprobs[[1]])
-    a=data.frame(actual=o,expected=e,stringsAsFactors=F)
-    haplo_counts[[count]]=list(marker=m,counts=a,haplotype_members=comparison[comparison$marker==m,..hap_founders],start=comparison[comparison$marker==m,]$start,end=comparison[comparison$marker==m,]$end)
+    #hsums=data.frame(matrix(unlist(lapply(hprobs, function(x) round(colSums(x)))),nrow=length(hprobs),byrow=T),stringsAsFactors=F)
+    #names(hsums)=markers
+    hsums=c()
+    for(m in 1:n_markers){
+      X = do.call(cbind,lapply(hprobs,function(x) x[,m]))
+      frep2=apply(X,MARGIN=2,function(x) round(sum(x[x>0.8])))
+      hsums=rbind(hsums,(c(markers[m],as.numeric(unlist(frep2)))))
+    }
+    hsums=as.data.frame(hsums,stringsAsFactors=F)
+    all_haps=paste0('HAPGRP_',seq(1,h))
+    names(hsums)=c('marker',all_haps)
+    hsums[,all_haps]=apply(hsums[,all_haps],MARGIN=2,function(x) as.numeric(x))
+
+    #
+
+    p_chi=sapply(seq(1,n_markers), function(x) chisq.test(x=hsums[x,all_haps],p=all_weights[,x])$p.value)
+  #p_chi=t(p_chi)
+    p_chi=data.frame(marker=markers,p_chi=unlist(p_chi),hagrp=h,stringsAsFactors=F)
+    rownames(p_chi)=seq(1,dim(p_chi)[1])
+    p_chi$pos=comparison$pos
+
+    for(m in p_chi[-log10(p_chi$p_chi)>=bonf,]$marker){
+      count=count+1
+      index=which(hsums$marker==m)
+      o=unname(t(hsums[index,all_haps]))
+      e=all_weights[,index]*sum(o)
+      a=data.frame(actual=o,expected=e,stringsAsFactors=F)
+      haplo_counts[[count]]=list(marker=m,counts=a,haplotype_members=comparison[comparison$marker==m,..hap_founders],start=comparison[comparison$marker==m,]$start,end=comparison[comparison$marker==m,]$end)
+    }
+    all_p_chi=rbind(all_p_chi,p_chi)
   }
-
-  all_p_chi=rbind(all_p_chi,p_chi)
   #total_sites=total_sites + (n_markers*h)
 }
 
-saveRDS(haplo_counts,sprintf('chr%s_observed_expected_founder_counts.rds',c))
+saveRDS(haplo_counts,sprintf('selection/haplotype_probs/chr%s_observed_expected_founder_counts.rds',c))
 
 names(all_p_chi)=c('marker','p_chi','hapgrp','pos')
 

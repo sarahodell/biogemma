@@ -1,7 +1,7 @@
 ###Make Rqtl2 control file
 
 library("qtl2")
-
+library('data.table')
 # Patho to sample genotype file
 #geno_file_path="qtl2_files"
 
@@ -17,15 +17,21 @@ map_path="../../genotypes/qtl2/startfiles"
 covar=NULL
 
 #Info on crossing scheme (see manual)
-crossinfo="Sim_cross_info.csv"
+#crossinfo="Sim_cross_info.csv"
 
 # Coding of genotypes (A for homozygous ref alleles, 2 for het, 3 for homozygous alt allele)
 genocodes=c(A=1L,B=3L)
-
+cross_info=fread('founder_cross_info.txt',data.table=F)
 #Names of the founder lines
 alleles=c("B73_inra","A632_usa","CO255_inra","FV252_inra","OH43_inra","A654_inra","FV2_inra","C103_inra","EP1_inra","D105_inra","W117_inra","B96","DK63","F492","ND245","VA85")
 
 for(r in 1:100){
+  alleles=unname(unlist(cross_info[cross_info$V1==r,2:17]))
+  cross_file=data.frame(paste0('Sim',seq(1,344)),1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,stringsAsFactors=F)
+  names(cross_file)=c('ind',alleles)
+  crossinfo=sprintf("Sim%.0f_cross_info.csv",r)
+  fwrite(cross_file,crossinfo,row.names=F,quote=F,sep=',')
+
   for (i in 1:10){
     #Name of control file
     control_file=sprintf("qtl2_files/MAGIC_DHSim_rep%.0f_c%.0f.json",r,i)

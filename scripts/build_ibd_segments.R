@@ -14,15 +14,70 @@ library('abind')
 founders=c("B73_inra","A632_usa","CO255_inra","FV252_inra","OH43_inra", "A654_inra","FV2_inra","C103_inra","EP1_inra","D105_inra","W117_inra","B96","DK63","F492","ND245","VA85")
 pmapfile=sprintf("genotypes/qtl2/startfiles/Biogemma_pmap_c%s.csv",c)
 ibd=fread(sprintf('ibd_segments/refinedibd/600K/Biogemma_600K_Founders_RefinedIBD_chr%s.ibd',c),data.table = F)
-
+#ibd=fread(sprintf('ibd_segments/refinedibd/600K/Biogemma_600K_Founders_tester_RefinedIBD_chr%.0f.ibd',c),data.table=F)
 names(ibd)=c('ID_1','Hap_ID1','ID_2','Hap_ID2','Chromosome','left_pos','right_pos','LOD','cM_length')
 ibd=ibd[ibd$ID_1!="MBS847" & ibd$ID_2 !="MBS847",]
+#ibd=ibd[ibd$ID_1=="MBS847" | ibd$ID_2 =="MBS847",]
+
+#total=0
+#per_f=list()
+#for(chr in 1:10){
+#  ibd=fread(sprintf('ibd_segments/refinedibd/600K/Biogemma_600K_Founders_tester_RefinedIBD_chr%.0f.ibd',chr),data.table=F)
+#  names(ibd)=c('ID_1','Hap_ID1','ID_2','Hap_ID2','Chromosome','left_pos','right_pos','LOD','cM_length')
+#  ibd=ibd[ibd$ID_1=="MBS847" | ibd$ID_2 =="MBS847",]
+#  ibd=ibd[ibd$Hap_ID1==1 & ibd$Hap_ID2==1,]
+#  if(nrow(ibd)!=0){
+#    ibd$size=ibd$right_pos-ibd$left_pos
+#    ibd=ibd[order(ibd$left_pos),]
+#    rownames(ibd)=seq(1,dim(ibd)[1])
+#    pmapfile=sprintf("genotypes/qtl2/startfiles/Biogemma_pmap_c%s.csv",c)
+#    pmap=fread(pmapfile,data.table=F)
+#    total=total+max(pmap$pos)
+#    for(f in founders){
+#      sub=ibd[ibd$ID_1==f | ibd$ID_2 ==f,]
+#      if(chr==1){
+#        per_f[[f]]=sum(sub$size)/1e6
+#      }
+#      else{
+#        per_f[[f]]=per_f[[f]]+sum(sub$size)/1e6
+#      }
+#    }
+#  }else{
+#    print(chr)
+#  }
+#}
+#total=total/1e6
+#dk63=c()
+#f="DK63"
+#for(chr in 1:10){
+#  ibd=fread(sprintf('ibd_segments/refinedibd/600K/Biogemma_600K_Founders_tester_RefinedIBD_chr%.0f.ibd',chr),data.table=F)
+#  names(ibd)=c('ID_1','Hap_ID1','ID_2','Hap_ID2','Chromosome','left_pos','right_pos','LOD','cM_length')
+#  ibd=ibd[ibd$ID_1=="MBS847" | ibd$ID_2 =="MBS847",]
+#  ibd$size=ibd$right_pos-ibd$left_pos
+#  ibd=ibd[order(ibd$left_pos),]
+#  rownames(ibd)=seq(1,dim(ibd)[1])
+#  pmapfile=sprintf("genotypes/qtl2/startfiles/Biogemma_pmap_c%s.csv",c)
+#  pmap=fread(pmapfile,data.table=F)
+#  sub=ibd[ibd$ID_1==f | ibd$ID_2 ==f,]
+#  print(sum(sub$size))
+#  dk63=rbind(dk63,sub)
+#  if(chr==1){
+#    per_f[[f]]=sum(sub$size)/1e6
+#  }
+#  else{
+#    per_f[[f]]=per_f[[f]]+sum(sub$size)/1e6
+#  }
+#}
+
 ibd=ibd[order(ibd$left_pos),]
 rownames(ibd)=seq(1,dim(ibd)[1])
-
-print("Finished formating IBD file")
-
+pmapfile=sprintf("genotypes/qtl2/startfiles/Biogemma_pmap_c%s.csv",c)
 pmap=fread(pmapfile,data.table=F)
+for(f in founders){
+  sub=ibd[ibd$ID_1==f | ibd$ID_2 ==f,]
+}
+
+#pmap=fread(pmapfile,data.table=F)
 #hap_founders=c("B73_inra","A632_usa","CO255_inra","FV252_inra","OH43_inra","A654_inra","FV2_inra","C103_inra","EP1_inra","D105_inra","W117_inra","B96","DK63","F492","ND245","VA85")
 
 ibd_segments=c()

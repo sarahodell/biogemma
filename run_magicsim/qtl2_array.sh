@@ -19,7 +19,7 @@ module load R
 #Rscript qtl2_array.R $SLURM_ARRAY_TASK_ID
 
 rep=$SLURM_ARRAY_TASK_ID
-chr=1
+#chr=1
 #chr=$SLURM_ARRAY_TASK_ID
 for chr in {1..10}; do
   echo $chr
