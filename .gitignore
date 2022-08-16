@@ -15,7 +15,7 @@ ref_align/psr_utils/__pycache__
 .gitignore~
 *.vcf*
 *.bam*
-*.txt*
+*.txt.*
 *.ped
 *.bed
 *.map
@@ -45,8 +45,10 @@ genotypes/probabilities/geno_probs/dropped/
 genotypes/probabilities/geno_probs/images/
 genotypes/probabilities/geno_probs/raw/
 genotypes/qtl2/Biogemma_DHgenos/DH*.csv
+genotypes/qtl2/Biogemma_DHgenos/rrBLUP_genotype.txt
 genotypes/qtl2/MAGICSimulations/
 genotypes/qtl2/Biogemma_DHgenos/*dropped*.rds
+genotypes/qtl2/Biogemma_foundergenos/*121718.csv
 genotypes/probabilities/haplotype_probs/RefinedIBD_WGS
 genotypes/probabilities/haplotype_probs/RefinedIBD_600K/dropped/
 genotypes/probabilities/haplotype_probs/RefinedIBD_600K/low_rep/
@@ -67,8 +69,10 @@ GridLMM/MITE_only/
 GridLMM/Biogemma_10p_QTL.csv
 GridLMM/Biogemma_Method_Overlap.csv
 GridLMM/Biogemma_QTL_all_thresholds.csv
+GridLMM/Biogemma_QTL_variance_explained.txt
 stats/
 selection/
+epistasis/
 scripts/old/
 slurm-scripts/old/
 run_magicsim/pgs/
