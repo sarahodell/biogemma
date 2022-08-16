@@ -1,8 +1,12 @@
+
+library('broom',lib.loc='/home/sodell/R/x86_64-pc-linux-gnu-library/3.6')
+require('ggpubr')
 library('data.table')
-library('ggplot2')
+#library('ggplot2')
 library('reshape2')
 library('tidyverse')
 library('cowplot')
+
 
 s_f_h_data=readRDS('GridLMM/effect_sizes/All_effect_sizes.rds')
 l=length(s_f_h_data)
@@ -226,13 +230,18 @@ rownames(colorcodes)=colorcodes$founder
 founderlabels=c("B73","OH43","A632","CO255","F252","A654","DK63","F2","EP1","D105","W117","F492","C103","B96","ND245","VA85")
 hap_means=fmelt %>% group_by(hapgrp) %>% summarize(mean=mean(f_value))
 fmelt$hap_value=hap_means[fmelt$hapgrp,]$mean
-fmelt=fmelt[order(fmelt$allele,fmelt$hap_value),]
+fmelt$has_mite = c(F,T,T,T,F,T,T,T,T,T,T,F,T,T,T,F)
+founderorder=c('B96','VA85','B73_inra','OH43_inra','FV252_inra',
+'A632_usa','C103_inra','F492','W117_inra','CO255_inra','FV2_inra',
+'DK63','A654_inra','D105_inra','ND245','EP1_inra')
+#fmelt=fmelt[order(fmelt$has_mite,fmelt$hap_value,decreasing=F),]
+fmelt=fmelt[founderorder,]
 fmelt$hap_allele=paste0(fmelt$allele,'_',fmelt$hapgrp)
 fmelt$variable_f=factor(fmelt$founder,levels=fmelt$founder)
 colorcodes=colorcodes[fmelt$founder,]
 leg<-ggplot(fmelt,aes(x=variable_f,y=f_value,fill=variable_f)) +
  geom_bar(stat="identity") +
- scale_fill_manual(values=colorcodes[levels(fmelt$variable_f),]$hex_color,labels=founder_lables) +
+ scale_fill_manual(values=colorcodes[levels(fmelt$variable_f),]$hex_color,labels=founderlabels) +
  guides(fill=guide_legend(title="Founder")) +
   theme(legend.title=element_text(size=8),legend.text=element_text(size=6))
 
@@ -241,7 +250,7 @@ legend <- get_legend(
    leg + theme(legend.box.margin = margin(0, 0, 0, 20))
 )
 #fmelt$variable_f = factor(fmelt$founder,levels=c(fmelt$founder))
-fmelt$has_mite = c(F,F,T,T,T,T,T,T,T,T,T,T,T,F,T,F)
+#fmelt$has_mite = c(F,F,T,T,T,T,T,T,T,T,T,T,T,F,T,F)
 label.df <- data.frame(Group = c("1_0","11_1","14_1"),
                        Value = c(25, 25,25))
 
@@ -257,18 +266,18 @@ rectangles <- data.frame(
   ymin = 0,
   ymax = 5)
 
-df <- data.frame(group = c("0_8","0_5","0_5","0_3","0_12","0_1","0_1","1_13","1_14"),
-                 variable_f = factor(c("EP1_inra","A654_inra","DK63","CO255_inra","F492","B73_inra","OH43_inra","ND245","VA85"),levels=levels(fmelt$variable_f)),
-                 Y = c(1:9))
+df <- data.frame(group = c("1_14","0_4","1_7","0_10","0_6","0_9","0_8"),
+                 variable_f = factor(c("VA85","FV252_inra","C103_inra","W117_inra","FV2_inra","D105_inra","EP1_inra"),levels=levels(fmelt$variable_f)),
+                 Y = c(1:7))
 df$xmin=as.numeric(df$variable_f)-0.5
 df$xmax=as.numeric(df$variable_f)+0.5
 a=ggplot() +
 geom_point(data=fmelt,aes(x=variable_f,y=f_value,color=allele)) +
   geom_rect(data=df,aes(xmin = xmin, xmax = xmax, ymin = -Inf, ymax = Inf),fill="grey60",alpha=0.5)
 
-df2=data.frame(group=c("0_8","0_9","0_5","0_6","0_3","0_10","0_12","0_2","0_1","0_4","1_13","1_7","1_14","1_11"),
-  variable_f=factor(c("EP1_inra","D105_inra","A654_inra","FV2_inra","CO255_inra","W117_inra","F492","A632_usa","B73_inra","FV252_inra","ND245","C103_inra","VA85","B96"),levels=levels(fmelt$variable_f)),
-  hjust=c(0.5,0.5,-2,0.5,0.5,0.5,0.5,0.5,-5,0.5,0.5,0.5,0.5,0.5),
+df2=data.frame(group=c("1_11","1_14","0_1","0_4","0_2","1_7","0_12","0_10","0_3","0_6","0_5","0_9","1_13","0_8"),
+  variable_f=factor(c("B96","VA85","B73_inra","FV252_inra","A632_usa","C103_inra","F492","W117_inra","CO255_inra","FV2_inra","DK63","D105_inra","ND245","EP1_inra"),levels=levels(fmelt$variable_f)),
+  hjust=c(0.5,0.5,-2,0.5,0.5,0.5,0.5,0.5,0.5,0.5,-5,0.5,0.5,0.5),
   vjust=25)
 
 #p + geom_text(data = label.df, label = "***")
@@ -279,7 +288,7 @@ geom_rect(data=df,aes(xmin = xmin, xmax = xmax, ymin = -Inf, ymax = Inf),fill="g
  geom_text(data=df2,aes(x=variable_f,y=35,hjust=hjust),label=c("A","B","C","D","E","F","G","H","I","J","K","L","M","N"),color="black",size=10)+
  geom_hline(yintercept=0,color="black") +
  ylab("DTA Effect Size (ggd)") + xlab("Founder") +
- scale_x_discrete(labels=c("EP1","D105","A654","DK63","F2","CO255","W117","F492","A632","B73","OH43","F252","ND245","C103","VA85","B96")) +
+ scale_x_discrete(labels=c("B96","VA85","B73","OH43","F252","A632","C103","F492","W117","CO255","F2","DK63","A654","D105","ND245","EP1")) +
   labs(color="Allele") +
   scale_y_continuous(breaks=c(-20,-10,0,10,20,30))+
  theme_classic() +
@@ -291,8 +300,8 @@ geom_rect(data=df,aes(xmin = xmin, xmax = xmax, ymin = -Inf, ymax = Inf),fill="g
  panel.grid.major.y=element_line(color="black"),
  #panel.grid.minor.y=element_line(color="black"),
   axis.text.x=element_text(size=24,vjust=0.5)) +
- theme(axis.text.x=element_text(face=ifelse(levels(fmelt$variable_f) %in% c("EP1_inra","D105_inra","A654_inra","DK63","FV2_inra","CO255_inra","W117_inra","F492","A632_usa","FV252_inra","ND245","C103_inra"),"bold.italic","plain")))
-
+ theme(axis.text.x=element_text(face=ifelse(levels(fmelt$variable_f) %in% c("EP1_inra","D105_inra","A654_inra","DK63","FV2_inra","CO255_inra","W117_inra","F492","A632_usa","FV252_inra","ND245","C103_inra"),"bold.italic","plain"))) +
+ geom_bracket(data=fmelt,aes(x=variable_f,y=f_value),xmin="FV252_inra",xmax="EP1_inra",y.position=25,label="MITE+",label.size=10)
 
  #guides(text=F)
 

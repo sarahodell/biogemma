@@ -4,11 +4,13 @@
 #SBATCH -o /home/sodell/projects/biogemma/slurm-logs/%A_%a.out
 #SBATCH -e /home/sodell/projects/biogemma/slurm-logs/%A_%a.error
 #SBATCH -t 48:00:00
-#SBATCH --array=1-5000%100
-#SBATCH --ntasks=1
-#SBATCH --mem 1G
+#SBATCH --array=1-1000%100
+#SBATCH --ntasks=2
+#SBATCH --mem 10G
 
 module load R
 
 rep=$SLURM_ARRAY_TASK_ID
-Rscript scripts/enrichments_randomization.R $rep
+Rscript scripts/interld_ft_random.R $rep
+
+#Rscript scripts/enrichments_randomization.R $rep

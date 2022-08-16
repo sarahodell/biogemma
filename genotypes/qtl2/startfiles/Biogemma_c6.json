@@ -1,0 +1,19 @@
+{
+  "description": "344 DH MAGIC Lines from 16 Biogemma Founders, Chromosome 6",
+  "crosstype": "riself16",
+  "sep": ",",
+  "na.strings": "NA",
+  "comment.char": "#",
+  "geno": "../Biogemma_DHgenos/DH_geno_chr6_121718.csv",
+  "founder_geno": "../Biogemma_foundergenos/Founder_genos_chr6.csv",
+  "gmap": "Biogemma_gmap_c6.csv",
+  "pmap": "Biogemma_pmap_c6.csv",
+  "alleles": ["B73_inra", "A632_usa", "CO255_inra", "FV252_inra", "OH43_inra", "A654_inra", "FV2_inra", "C103_inra", "EP1_inra", "D105_inra", "W117_inra", "B96", "DK63", "F492", "ND245", "VA85"],
+  "genotypes": {
+    "A": 1,
+    "B": 3
+  },
+  "cross_info": {
+    "file": "Biogemma_cross_info.csv"
+  }
+}

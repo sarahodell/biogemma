@@ -178,8 +178,8 @@ print(p3)
 dev.off()
 
 
-p1=plot_grid(h,h2,h3,ncol=3,labels=c("B","C","D"))
-p2=plot_grid(p,p1,nrow=2,labels = c("A",""))
+p1=plot_grid(h,h2,h3,ncol=3,labels=c("B","C","D"),label_size=30)
+p2=plot_grid(p,p1,nrow=2,labels = c("A",""),label_size=30)
 
 png('figure2.png',width=2000,height=1000)
 print(p2)

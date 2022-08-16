@@ -19,6 +19,10 @@ phenotypes <- phenotypes[phenotypes$Genotype_code %in% rownames(X),]
 X = X[as.character(phenotypes$Genotype_code),]
 X <- unique(X)
 
+X_centered<-sweep(X,2,colMeans(X),'-') # center marker genotypes
+K = tcrossprod(X_centered)/ncol(X_centered)
+fwrite(as.data.frame(K),'K_matrix_full.txt',row.names=T,quote=F,sep='\t')
+
 # Leave on chromosome out
 for(i in 1:10){
   chr=paste0('S',i,'_')

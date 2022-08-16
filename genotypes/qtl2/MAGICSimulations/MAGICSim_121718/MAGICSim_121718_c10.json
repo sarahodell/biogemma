@@ -1,0 +1,19 @@
+{
+  "description": "400 Simulated DH MAGIC Lines from 16 Biogemma Founders, Chromosome 10",
+  "crosstype": "riself16",
+  "sep": ",",
+  "na.strings": "NA",
+  "comment.char": "#",
+  "geno": "MAGICSim_121718_geno.csv",
+  "founder_geno": "Founder_genos_chr10_121718.csv",
+  "gmap": "Genetic_map_c10.csv",
+  "pmap": "Physical_map_c10.csv",
+  "alleles": ["A632_usa","B73_inra","CO255_inra","FV252_inra","OH43_inra","A654_inra","FV2_inra","C103_inra","EP1_inra","D105_inra","W117_inra","B96","DK63","F492","ND245","VA85"],
+  "genotypes": {
+    "A": 1,
+    "B": 3
+  },
+  "cross_info": {
+    "file": "MAGICSim_cross_info.csv"
+  }
+}
