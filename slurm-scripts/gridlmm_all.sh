@@ -19,10 +19,10 @@ for i in {1..570}; do
   if [ $env == "ALL" ]
   then
     echo "ALL environments"
-    Rscript GridLMM_600K_all.R $pheno $chr 4
+    Rscript ../../scripts/GridLMM_600K_blup.R $pheno $chr 4
   else
     echo $env
-    Rscript GridLMM_600K_pheno_x_env.R $pheno $env $chr 4
+    Rscript ../../scripts/GridLMM_600K_pheno_x_env.R $pheno $env $chr 4
   fi
 done
 
@@ -40,10 +40,10 @@ for i in {1..570}; do
   if [ $env == "ALL" ]
   then
     echo "ALL environments"
-    Rscript GridLMM_run_founders.R $pheno $chr 4
+    Rscript ../../scripts/GridLMM_fp_blup.R $pheno $chr 4
   else
     echo $env
-    Rscript GridLMM_pheno_x_env.R $pheno $env $chr 4
+    Rscript ../../scripts/GridLMM_fp_pheno_x_env.R $pheno $env $chr 4
   fi
 done
 
@@ -70,9 +70,9 @@ for i in {1..570}; do
       echo $hapgrp
       if [ $env == "ALL" ]
       then
-  	     Rscript GridLMM_run.R $pheno $chr $hapgrp 4
+  	     Rscript ../../scripts/GridLMM_hp_blup.R $pheno $chr $hapgrp 4
       else
-  	     Rscript GridLMM_pheno_x_env.R $pheno $env $chr $hapgrp 4
+  	     Rscript ../../scripts/GridLMM_hp_pheno_x_env.R $pheno $env $chr $hapgrp 4
       fi
       #echo "$pheno $env $chr $hapgrp done" >> report.txt
   done
