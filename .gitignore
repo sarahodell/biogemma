@@ -11,6 +11,7 @@ mppR/
 *.R~
 ref_align/psr_utils/__pycache__
 *.pl~
+.gitignore
 .gitignore~
 *.vcf*
 *.bam*
