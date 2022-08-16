@@ -1,7 +1,9 @@
 # QTL detection in a MAGIC population using bi-allelic, parental, and ancestral haplotype variation
 
 "Modeling allelic diversity of multiparent mapping populations affects detection of quantitative trait loci"
+
 Full paper here: [Odell et al. (2022)](https://academic.oup.com/g3journal/article/12/3/jkac011/6509518)
+
 Companion paper here: [Hudson et al. (2022)](https://academic.oup.com/g3journal/article/12/3/jkac013/6520465)
 
 600K Affymetrix SNP Array genotype data can be found on [Figshare](https://figshare.com/articles/dataset/Biogemma_BALANCE_MAGIC_600K_SNP_Genotype_Data/14903262).
