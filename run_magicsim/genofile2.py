@@ -28,18 +28,18 @@ def call_bcftools(infile,region):
     """Reads vcf file and extracts data on samples and genotypes for each marker
     Returns a list of samples and list of markers and genotypes (info)
     """
-    process1 = Popen(['bcftools','query','-l',infile],stdout=PIPE,stderr=STDOUT)
+    process1 = Popen(['bcftools','query','-l',infile],text=True,stdout=PIPE,stderr=STDOUT)
     stdout,stderr=process1.communicate()
     print(stderr)
     samples = stdout.split('\n')[:-1]
     if region is None:
-        process2 = Popen(['bcftools','query','-f','%ID[\tGT=%GT]\n',infile],stdout=PIPE,stderr=STDOUT)
+        process2 = Popen(['bcftools','query','-f','%ID[\tGT=%GT]\n',infile],text=True,stdout=PIPE,stderr=STDOUT)
     else:
-        process2 = Popen(['bcftools','query','-r',region,'-f','%ID[\tGT=%GT]\n',infile],stdout=PIPE,stderr=STDOUT)
+        process2 = Popen(['bcftools','query','-r',region,'-f','%ID[\tGT=%GT]\n',infile],text=True,stdout=PIPE,stderr=STDOUT)
     stdout,stderr=process2.communicate()
     info = stdout.split('\n')[:-1]
     print(stderr)
-    print "Read vcf file: Contains info on {0} samples and {1} markers".format(len(samples),len(info))
+    print(f"Read vcf file: Contains info on {len(samples)} samples and {len(info)} markers")
     return samples,info
 
 def get_genofile():
@@ -76,7 +76,7 @@ def get_genofile():
                 count+=1
     for j in geno.keys():
         txt+='\n'+ ','.join(geno[j])
-    print "Writing out to {0}".format(args.outfile)
+    print(f"Writing out to {args.outfile}")
     with open(args.outfile,'w') as outfile:
         outfile.write(txt)
 

@@ -19,44 +19,58 @@ covar=NULL
 #Info on crossing scheme (see manual)
 #crossinfo="Sim_cross_info.csv"
 
+# make cross info siles
+founders=c("B73_inra","A632_usa","CO255_inra","FV252_inra",
+           "OH43_inra","A654_inra","FV2_inra","C103_inra",
+           "EP1_inra","D105_inra","W117_inra","B96","DK63",
+           "F492","ND245","VA85")
+
+
 # Coding of genotypes (A for homozygous ref alleles, 2 for het, 3 for homozygous alt allele)
 genocodes=c(A=1L,B=3L)
-cross_info=fread('founder_cross_info.txt',data.table=F)
+#cross_info=fread('founder_cross_info.txt',data.table=F)
 #Names of the founder lines
 alleles=c("B73_inra","A632_usa","CO255_inra","FV252_inra","OH43_inra","A654_inra","FV2_inra","C103_inra","EP1_inra","D105_inra","W117_inra","B96","DK63","F492","ND245","VA85")
 
 for(r in 1:100){
-  alleles=unname(unlist(cross_info[cross_info$V1==r,2:17]))
-  cross_file=data.frame(paste0('Sim',seq(1,344)),1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,stringsAsFactors=F)
-  names(cross_file)=c('ind',alleles)
-  crossinfo=sprintf("Sim%.0f_cross_info.csv",r)
-  fwrite(cross_file,crossinfo,row.names=F,quote=F,sep=',')
+	if(r==1){
+		cross_info=c(1,4,14,15,3,8,10,16,2,9,5,6,12,7,11,13)#
+	}else{
+		set.seed(r)
+		cross_info=sample(seq(1,16))
+	}
+	#crosscode=founder[cross_order]
+	df=data.frame(id=paste0('Sim',seq(1,325)),stringsAsFactors=F)
+	df=cbind(df,as.data.frame(t(matrix(replicate(325,cross_info),nrow=16,ncol=325))))
+	names(df)=c('ind',alleles)
+	fwrite(df,sprintf('Sim%.0f_cross_info_v3.csv',r),row.names=F,quote=F,sep=',')
 
-  for (i in 1:10){
-    #Name of control file
-    control_file=sprintf("qtl2_files/MAGIC_DHSim_rep%.0f_c%.0f.json",r,i)
-
-    # Name of sample genotype file
-    geno_filename=sprintf("MAGIC_DHSimAll_rep%.0f_chr%.0f.csv",r,i)
-    # Name of founder genotype file
-    fgeno_filename=sprintf("Founder_genos_chr%.0f.csv",i)
-    # Name of physical map
-    pmap=sprintf("Biogemma_pmap_c%.0f.csv",i)
-    # Name of genetic map
-    gmap=sprintf("Biogemma_gmap_c%.0f.csv",i)
-
-
-    # Brief description of file
-    description=sprintf("400 Simulated DH MAGIC Lines from 16 Founders, Chromosome %.0f",i)
-
-    write_control_file(output_file =control_file,
-    crosstype = crosstype,geno_file=geno_filename,
-    founder_geno_file = sprintf("%s/%s",fgeno_file_path,fgeno_filename),
-    gmap_file=sprintf("%s/%s",map_path,gmap),pmap_file = sprintf("%s/%s",map_path,pmap),covar_file=covar,crossinfo_file = crossinfo,
-    geno_codes=genocodes,
-    alleles=alleles,
-    sep=",",na.strings=c("NA"),comment.char="#",geno_transposed = FALSE,
-    founder_geno_transposed = FALSE,description=description
-    )
-  }
+	alleles=founders[cross_info]
+	#alleles=unname(unlist(cross_info[cross_info$V1==r,2:17]))
+  	#cross_file=data.frame(paste0('Sim',seq(1,325)),1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,stringsAsFactors=F)
+  	#names(cross_file)=c('ind',alleles)
+  	crossinfo=sprintf("Sim%.0f_cross_info_v3.csv",r)
+  	#fwrite(cross_file,crossinfo,row.names=F,quote=F,sep=',')
+  	for (i in 1:10){
+  		#Name of control file
+  		control_file=sprintf("MAGIC_DHSim_rep%.0f_c%.0f_v3.json",r,i)
+  		# Name of sample genotype file
+  		geno_filename=sprintf("MAGIC_DHSimAll_rep%.0f_chr%.0f_v3.csv",r,i)
+  		# Name of founder genotype file
+  		fgeno_filename=sprintf("Founder_genos_chr%.0f.csv",i)
+  		# Name of physical map
+  		pmap=sprintf("Biogemma_pmap_c%.0f.csv",i)
+  		# Name of genetic map
+  		gmap=sprintf("Biogemma_gmap_c%.0f.csv",i)
+  		# Brief description of file
+  		description=sprintf("400 Simulated DH MAGIC Lines from 16 Founders, Chromosome %.0f",i)
+  		write_control_file(output_file =control_file,
+  		crosstype = crosstype,geno_file=geno_filename,
+  		founder_geno_file = sprintf("%s/%s",fgeno_file_path,fgeno_filename),
+  		gmap_file=sprintf("%s/%s",map_path,gmap),pmap_file = sprintf("%s/%s",map_path,pmap),covar_file=covar,crossinfo_file = crossinfo,
+  		geno_codes=genocodes,
+  		alleles=alleles,
+  		sep=",",na.strings=c("NA"),comment.char="#",geno_transposed = FALSE,
+  		founder_geno_transposed = FALSE,description=description)
+  	}
 }

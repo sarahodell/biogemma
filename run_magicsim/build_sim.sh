@@ -4,17 +4,17 @@
 #SBATCH -o /home/sodell/projects/biogemma/slurm-logs/%A_%a.out
 #SBATCH -e /home/sodell/projects/biogemma/slurm-logs/%A_%a.error
 #SBATCH -t 24:00:00
-#SBATCH --array=1-100
-#SBATCH --mem 3G
-#SBATCH --ntasks 1
+#SBATCH --array=2-100
+#SBATCH --mem 16G
+#SBATCH --ntasks 2
 
 #Creates a merged vcf files of 400 Simulated MAGIC lines
 
-module load bcftools
-module load tabix
-module load vcftools
+#module load bcftools
+#module load tabix
+#module load vcftools
 module load R
-module load python/2.7.14
+#module load python/2.7.14
 #module load conda3
 
 #source activate pandas-env
@@ -23,7 +23,8 @@ module load python/2.7.14
 #rep=
 rep=$SLURM_ARRAY_TASK_ID
 
-Rscript SimulateMAGIC.R $rep
+#Rscript SimulateMAGIC.R $rep
+Rscript SimulateBALANCE.R $rep
 
 #mkdir tmp
 

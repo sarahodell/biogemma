@@ -3,8 +3,8 @@
 #SBATCH -J qtl2
 #SBATCH -o /home/sodell/projects/biogemma/slurm-logs/%A_%a_out.txt
 #SBATCH -e /home/sodell/projects/biogemma/slurm-logs/%A_%a_error.txt
-#SBATCH -t 96:00:00
-#SBATCH --array=1-100
+#SBATCH -t 24:00:00
+#SBATCH --array=66-73
 #SBATCH --ntasks=8
 #SBATCH --mem=63G
 

@@ -22,12 +22,12 @@ founders=c("B73_inra","A632_usa","CO255_inra","FV252_inra",
            "EP1_inra","D105_inra","W117_inra","B96","DK63",
            "F492","ND245","VA85")
 
-#if(rep==1){
-#  cross_order=c(1,4,14,15,3,8,10,16,2,9,5,6,12,7,11,13)
-#}else{
-#  cross_order=sample(seq(1,16))
-#}
-cross_order=c(1,4,14,15,3,8,10,16,2,9,5,6,12,7,11,13)
+if(rep==1){
+  cross_order=c(1,4,14,15,3,8,10,16,2,9,5,6,12,7,11,13)
+}else{
+  cross_order=sample(seq(1,16))
+}
+#cross_order=c(1,4,14,15,3,8,10,16,2,9,5,6,12,7,11,13)
 cross_info=founders[cross_order]
 #line=c(rep,cross_info)
 #names(line)=c('rep',seq(1,16))
@@ -108,7 +108,7 @@ for(chr in 1:10){
   pop_breaks_files=rbind(pop_breaks_files,pop_breaks_file)
 }
 
-fwrite(pop_breaks_files,sprintf('breaktables/MAGIC_DH_Sim_rep%.0f_breaktable_v2.txt',rep),row.names=F,quote=F,sep='\t')
+fwrite(pop_breaks_files,sprintf('breaktables/MAGIC_DH_Sim_rep%.0f_breaktable_v3.txt',rep),row.names=F,quote=F,sep='\t')
 
 
 #total_xo=c()

@@ -10,8 +10,8 @@ c=as.character(args[1])
 rep=as.character(args[2])
 cores=as.numeric(args[[3]])
 
-control_file=sprintf('MAGIC_DHSim_rep%s_c%s.json',rep,c)
-outfile=sprintf("MAGIC_DHSim_rep%s_c%s_genoprobs.rds",rep,c)
+control_file=sprintf('MAGIC_DHSim_rep%s_c%s_v3.json',rep,c)
+outfile=sprintf("MAGIC_DHSim_rep%s_c%s_genoprobs_v3.rds",rep,c)
 
 bg<-read_cross2(control_file)
 bg<-drop_nullmarkers(bg)
